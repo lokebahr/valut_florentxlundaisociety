@@ -138,12 +138,11 @@ export function Home() {
         <div className="lp-hero__scroll" aria-hidden><span /></div>
       </section>
 
+      <PressCallout />
       <FeaturesSection />
       <HowItWorksSection />
       <VanSection onCta={handleDinSida} busy={authBusy} />
       <LifestyleSection />
-      <StatsSection />
-      <TestimonialsSection />
       <CtaSection onCta={handleDinSida} busy={authBusy} />
 
       <footer className="lp-footer">
@@ -152,6 +151,39 @@ export function Home() {
           <span>© 2025 Valut · Sparande som följer dina mål</span>
         </div>
       </footer>
+    </div>
+  )
+}
+
+function PressCallout() {
+  return (
+    <div className="lp-section lp-section--press">
+      <div className="lp-wrap">
+        <div className="lp-eyebrow" style={{ justifyContent: 'center', marginBottom: '0.75rem' }}>Därför behövs Valut</div>
+        <div className="lp-press-grid">
+          <a
+            href="https://www.placera.se/kronika/nordeas-forslag-till-robin-1-600-000-kronor-i-avgift-2025-12-23"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="lp-press-card"
+          >
+            <div className="lp-press-card__label">Placera.se</div>
+            <p className="lp-press-card__quote">"Nordeas förslag till Robin: 1&nbsp;600&nbsp;000 kronor i avgift"</p>
+            <span className="lp-press-card__cta">Läs artikeln →</span>
+          </a>
+          <a
+            href="https://www.fi.se/sv/publicerat/rapporter/rapporter/2025/majoriteten-sparar-hos-storbanker--trots-hogre-avgifter/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="lp-press-card"
+          >
+            <div className="lp-press-card__label">Finansinspektionen</div>
+            <p className="lp-press-card__quote">"Majoriteten sparar hos storbanker – trots högre avgifter"</p>
+            <span className="lp-press-card__cta">Läs rapporten →</span>
+          </a>
+        </div>
+        <p className="lp-press-card__context">Din bank jobbar för sig själv. Valut jobbar för dig.</p>
+      </div>
     </div>
   )
 }
@@ -191,7 +223,7 @@ function FeaturesSection() {
     },
   ]
   return (
-    <div ref={ref} className={`lp-section lp-section--light lp-reveal${visible ? ' lp-reveal--in' : ''}`}>
+    <div ref={ref} className={`lp-section lp-section--ink lp-reveal${visible ? ' lp-reveal--in' : ''}`}>
       <div className="lp-wrap">
         <div className="lp-eyebrow lp-eyebrow--green">Vad vi erbjuder</div>
         <h2 className="lp-h2">Allt du behöver för ett<br />smartare sparande</h2>
@@ -299,103 +331,7 @@ function LifestyleSection() {
             >
               <div className="lp-lifestyle__img">
                 <img src={item.src} alt={item.alt} />
-              </div>
-              <span className="lp-lifestyle__label">{item.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function useCountUp(target: number, active: boolean, duration = 1600) {
-  const [count, setCount] = useState(0)
-  useEffect(() => {
-    if (!active) return
-    const start = performance.now()
-    const tick = (now: number) => {
-      const t = Math.min((now - start) / duration, 1)
-      const ease = 1 - Math.pow(1 - t, 3)
-      setCount(Math.floor(ease * target))
-      if (t < 1) requestAnimationFrame(tick)
-      else setCount(target)
-    }
-    requestAnimationFrame(tick)
-  }, [target, active, duration])
-  return count
-}
-
-function AnimatedStat({ value, label, delay, active }: { value: string; label: string; delay: number; active: boolean }) {
-  const numeric = parseInt(value.replace(/\D/g, ''), 10)
-  const suffix = value.replace(/[\d\s]/g, '')
-  const count = useCountUp(isNaN(numeric) ? 0 : numeric, active)
-  const display = isNaN(numeric) ? value : `${count.toLocaleString('sv-SE')}${suffix}`
-  return (
-    <div className="lp-stat" style={{ '--lp-delay': `${delay}s` } as CSSProperties}>
-      <div className="lp-stat__value">{display}</div>
-      <div className="lp-stat__label">{label}</div>
-    </div>
-  )
-}
-
-function StatsSection() {
-  const { ref, visible } = useReveal()
-  const stats = [
-    { value: '14000+', label: 'Analyserade portföljer' },
-    { value: '98%', label: 'Nöjda användare' },
-    { value: '2 min', label: 'Till din första analys' },
-    { value: '100%', label: 'Oberoende rådgivning' },
-  ]
-  return (
-    <div ref={ref} className={`lp-section lp-section--cream lp-reveal${visible ? ' lp-reveal--in' : ''}`}>
-      <div className="lp-wrap">
-        <div className="lp-stats">
-          {stats.map((s, i) => (
-            <AnimatedStat key={s.label} value={s.value} label={s.label} delay={i * 0.1} active={visible} />
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function TestimonialsSection() {
-  const { ref, visible } = useReveal()
-  const quotes = [
-    {
-      quote: 'Jag visste inte att mina fonder överlappade varandra så mycket. Valut visade mig det på sekunder.',
-      name: 'Anna K.',
-      role: 'Lärare, 38 år',
-    },
-    {
-      quote: 'Enkelt, tydligt och utan säljsnack. Exakt vad jag letat efter.',
-      name: 'Marcus L.',
-      role: 'Ingenjör, 45 år',
-    },
-    {
-      quote: 'Fick äntligen ordning på mitt pensionssparande. Rekommenderar varmt.',
-      name: 'Sofia E.',
-      role: 'Egenföretagare, 52 år',
-    },
-  ]
-  return (
-    <div ref={ref} className={`lp-section lp-section--light lp-reveal${visible ? ' lp-reveal--in' : ''}`}>
-      <div className="lp-wrap">
-        <div className="lp-eyebrow lp-eyebrow--green">Vad användare säger</div>
-        <h2 className="lp-h2">Riktiga råd.<br />Riktiga resultat.</h2>
-        <div className="lp-grid-3">
-          {quotes.map((q, i) => (
-            <div
-              className="lp-testimonial"
-              key={i}
-              style={{ '--lp-delay': `${i * 0.1}s` } as CSSProperties}
-            >
-              <div className="lp-testimonial__stars" aria-label="5 stjärnor">{'★★★★★'}</div>
-              <p className="lp-testimonial__quote">{q.quote}</p>
-              <div className="lp-testimonial__author">
-                <strong>{q.name}</strong>
-                <span>{q.role}</span>
+                <span className="lp-lifestyle__label">{item.label}</span>
               </div>
             </div>
           ))}
