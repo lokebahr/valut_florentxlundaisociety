@@ -1307,20 +1307,21 @@ ul.plain li {
 /* Van split section */
 .lp-split {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   min-height: 80vh;
 }
 
-@media (min-width: 768px) {
-  .lp-split { grid-template-columns: 1fr 1fr; }
+@media (max-width: 767px) {
+  .lp-split { grid-template-columns: 1fr; }
 }
 
 .lp-split__img {
   overflow: hidden;
-  min-height: 55vw;
+  min-height: auto;
 }
 
-@media (min-width: 768px) {
-  .lp-split__img { min-height: auto; }
+@media (max-width: 767px) {
+  .lp-split__img { min-height: 55vw; }
 }
 
 .lp-split__img img {
