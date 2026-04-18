@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
 import { HeroImage } from '../components/HeroImage'
@@ -21,24 +21,133 @@ type Overview = {
   montrose_client_configured: boolean
   montrose_connected: boolean
   montrose_enabled: boolean
+  /** False when holdings already match suggested funds — hide Montrose prepare flow */
+  montrose_show_prepare_switch?: boolean
+  /** Server-computed buys split by profile target equity / ränta */
+  montrose_buy_plan?: {
+    amount_sek: number
+    target_equity_share: number
+    buy_lines: {
+      target_fund_name: string
+      amount_sek: number
+      target_weight: number
+      montrose_orderbook_id?: number
+    }[]
+    source_holdings: { name: string; value_sek: number }[]
+  } | null
+}
+
+type MontroseBuyTicket = {
+  name: string
+  amount_sek: number
+  montrose_orderbook_id?: number
+  raw: unknown
+  decoded: unknown
 }
 
 type MontrosePrepareResponse = {
-  sell: { raw: unknown; decoded: unknown }
-  buy: { raw: unknown; decoded: unknown }
+  plan: {
+    amount_sek: number
+    target_equity_share: number
+    buy_lines: {
+      target_fund_name: string
+      amount_sek: number
+      target_weight: number
+      montrose_orderbook_id?: number
+    }[]
+    source_holdings: { name: string; value_sek: number }[]
+  }
+  buys: MontroseBuyTicket[]
   message: string
 }
 
 type Tab = 'overview' | 'profile' | 'tracker'
 
+function montroseTradeUrl(decoded: unknown): string | null {
+  if (decoded && typeof decoded === 'object' && 'url' in decoded) {
+    const u = (decoded as { url: unknown }).url
+    return typeof u === 'string' && u.startsWith('http') ? u : null
+  }
+  return null
+}
+
+function MontroseTicketsModal({
+  result,
+  onClose,
+}: {
+  result: MontrosePrepareResponse
+  onClose: () => void
+}) {
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [onClose])
+
+  return (
+    <div
+      className="montrose-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="montrose-modal-title"
+    >
+      <button type="button" className="montrose-modal__backdrop" aria-label="Stäng" onClick={onClose} />
+      <div className="montrose-modal__panel">
+        <button type="button" className="montrose-modal__close btn-ghost" onClick={onClose} aria-label="Stäng">
+          ×
+        </button>
+        <div className="montrose-modal__header">
+          <p className="montrose-modal__eyebrow">Klart i Montrose</p>
+          <h2 id="montrose-modal-title" className="montrose-modal__title">
+            Slutför dina köp
+          </h2>
+          <p className="montrose-modal__lede muted small">{result.message}</p>
+          <p className="montrose-modal__hint small">
+            Öppna <strong>båda</strong> länkarna i tur och ordning — ett köp per fond.
+          </p>
+        </div>
+        <div className="montrose-ticket-grid">
+          {result.buys.map((b, i) => {
+            const href = montroseTradeUrl(b.decoded)
+            return (
+              <article key={`${b.name}-${i}`} className="montrose-ticket">
+                <div className="montrose-ticket__meta">
+                  <span className="montrose-ticket__step">Köp {i + 1}</span>
+                  <h3 className="montrose-ticket__name">{b.name}</h3>
+                  <p className="montrose-ticket__amount">{b.amount_sek.toLocaleString('sv-SE')} kr</p>
+                </div>
+                {href ? (
+                  <a
+                    className="btn-primary montrose-ticket__cta"
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Fortsätt i Montrose
+                  </a>
+                ) : (
+                  <p className="muted small montrose-ticket__cta-fallback">Kunde inte läsa handelslänk.</p>
+                )}
+              </article>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function Dashboard() {
   const [data, setData] = useState<Overview | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('overview')
-  const [sellName, setSellName] = useState('')
-  const [buyName, setBuyName] = useState('')
-  const [amountSek, setAmountSek] = useState<number>(50_000)
-  const [accountId, setAccountId] = useState('')
   const [montroseBusy, setMontroseBusy] = useState(false)
   const [montroseConnectBusy, setMontroseConnectBusy] = useState(false)
   const [montroseConnectError, setMontroseConnectError] = useState<string | null>(null)
@@ -47,25 +156,19 @@ export function Dashboard() {
 
   useEffect(() => {
     api<Overview>('/api/dashboard/overview')
-      .then((o) => {
-        setData(o)
-        const analysis = o.analysis as {
-          suggested_funds?: { name: string; rationale: string }[]
-        }
-        const holdings = o.holdings || []
-        const firstH = holdings[0] as { name?: string; value_sek?: number } | undefined
-        const suggested = analysis.suggested_funds?.[0]
-        if (firstH?.name) setSellName(String(firstH.name))
-        if (suggested?.name) setBuyName(String(suggested.name))
-        if (firstH?.value_sek != null && Number(firstH.value_sek) > 0) {
-          setAmountSek(Math.min(Math.floor(Number(firstH.value_sek)), 500_000))
-        }
-      })
+      .then((o) => setData(o))
       .catch((e) => setError(e instanceof Error ? e.message : 'Kunde inte ladda översikten.'))
   }, [])
 
   const canMontrose = useMemo(() => data?.montrose_enabled === true, [data])
   const montroseConnected = useMemo(() => data?.montrose_connected === true, [data])
+  const showMontrosePrepare = useMemo(
+    () => (data?.montrose_show_prepare_switch ?? true) === true,
+    [data],
+  )
+  const montroseBuyPlan = data?.montrose_buy_plan ?? null
+
+  const closeMontroseModal = useCallback(() => setMontroseResult(null), [])
 
   async function startMontroseOAuth() {
     setMontroseConnectError(null)
@@ -86,12 +189,7 @@ export function Dashboard() {
     try {
       const res = await api<MontrosePrepareResponse>('/api/dashboard/montrose/prepare-switch', {
         method: 'POST',
-        body: {
-          sell_name: sellName,
-          buy_name: buyName,
-          amount_sek: amountSek,
-          account_id: accountId.trim() || undefined,
-        },
+        body: {},
       })
       setMontroseResult(res)
     } catch (e) {
@@ -136,11 +234,18 @@ export function Dashboard() {
   const analysis = data.analysis as {
     profile_targets?: Record<string, number>
     issues?: { title: string; body: string; severity?: string }[]
-    suggested_funds?: { name: string; rationale: string }[]
+    suggested_funds?: {
+      name: string
+      rationale: string
+      target_weight?: number
+      montrose_orderbook_id?: number
+      role?: string
+    }[]
   }
 
   return (
-    <Shell>
+    <>
+      <Shell>
       <div className="page page--wide stack" style={{ gap: '1.5rem' }}>
         <HeroImage className="hero-image--compact" src={images.seaCalm} alt={imageAlt.seaCalm} />
 
@@ -190,46 +295,90 @@ export function Dashboard() {
               </div>
             </div>
 
-            <section className="surface step-animate">
-              <h2>Förbered byte via Montrose</h2>
-              <p className="muted small">
-                Skapar två biljetter i Montrose MCP: <strong>Sälj</strong> befintlig fond och <strong>Köp</strong> målfond med samma belopp (SEK).
-                Du slutför sedan i Montrose / din bank. Klienten registreras dynamiskt mot Montrose (<code>/register</code>) när du ansluter; token sparas per användare.
-              </p>
-              {!montroseConnected && (
-                <div className="stack stack--tight" style={{ marginTop: '0.75rem' }}>
-                  <p className="muted small">Anslut ditt Montrose-konto för att kunna förbereda ordrar.</p>
-                  <button type="button" className="btn-primary" disabled={montroseConnectBusy} onClick={() => void startMontroseOAuth()}>
-                    {montroseConnectBusy ? 'Öppnar Montrose…' : 'Anslut Montrose'}
-                  </button>
-                  {montroseConnectError && <p className="error small" role="alert">{montroseConnectError}</p>}
+            {showMontrosePrepare && (
+              <section className="surface step-animate montrose-dash">
+                <div className="montrose-dash__intro">
+                  <h2 className="montrose-dash__heading">Köp via Montrose</h2>
+                  <p className="montrose-dash__text muted small">
+                    Vi utgår från dina <strong>innehav</strong> och våra <strong>två rekommenderade fonder</strong> och skapar köpbiljetter i Montrose
+                    för det som inte redan följer rekommendationen — fördelat enligt din målprofil (aktier och kort ränta). Sälj hanterar du själv hos
+                    banken om det behövs.
+                  </p>
                 </div>
-              )}
-              {montroseConnected && (
-                <div className="stack stack--tight" style={{ marginTop: '0.75rem', maxWidth: '32rem' }}>
-                  <label>Sälj (fondnamn)<input value={sellName} onChange={(e) => setSellName(e.target.value)} /></label>
-                  <label>Köp (fondnamn)<input value={buyName} onChange={(e) => setBuyName(e.target.value)} /></label>
-                  <label>Belopp (SEK)<input type="number" min={1000} step={1000} value={amountSek} onChange={(e) => setAmountSek(Number(e.target.value))} /></label>
-                  <label>
-                    Konto-id i Montrose (valfritt)
-                    <input value={accountId} onChange={(e) => setAccountId(e.target.value)} placeholder="Om ditt Montrose-konto kräver accountId" />
-                  </label>
-                  <button type="button" className="btn-primary" disabled={!canMontrose || montroseBusy} onClick={() => void prepareMontrose()}>
-                    {montroseBusy ? 'Förbereder…' : 'Förbered order i Montrose'}
-                  </button>
-                </div>
-              )}
-              {montroseError && <p className="error small" role="alert" style={{ marginTop: '0.75rem' }}>{montroseError}</p>}
-              {montroseResult && (
-                <details className="callout stack stack--tight" style={{ marginTop: '1rem' }}>
-                  <summary className="small" style={{ cursor: 'pointer' }}>Montrose-svar (rått + tolkat)</summary>
-                  <p className="muted small">{montroseResult.message}</p>
-                  <pre className="small" style={{ overflow: 'auto', maxHeight: 'min(60vh, 24rem)', padding: '0.75rem', background: 'var(--color-surface-elevated, #f4f4f5)', borderRadius: '8px' }}>
-                    {JSON.stringify(montroseResult, null, 2)}
-                  </pre>
-                </details>
-              )}
-            </section>
+                {!montroseConnected && (
+                  <div className="montrose-dash__connect">
+                    <p className="muted small">Anslut Montrose först så kan vi förbereda ordrar åt dig.</p>
+                    <button type="button" className="btn-primary" disabled={montroseConnectBusy} onClick={() => void startMontroseOAuth()}>
+                      {montroseConnectBusy ? 'Öppnar Montrose…' : 'Anslut Montrose'}
+                    </button>
+                    {montroseConnectError && (
+                      <p className="error small" role="alert">
+                        {montroseConnectError}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {montroseConnected && !montroseBuyPlan && (
+                  <p className="muted small montrose-dash__empty">
+                    Inga investeringsinnehav behöver flyttas till rekommenderad fond utifrån aktuell data, eller så saknas belopp att handla för.
+                  </p>
+                )}
+                {montroseConnected && montroseBuyPlan && (
+                  <div className="montrose-dash__plan">
+                    <div className="montrose-dash__stats">
+                      <div className="montrose-dash__stat">
+                        <span className="montrose-dash__stat-label">Totalt köpbelopp</span>
+                        <span className="montrose-dash__stat-value">{montroseBuyPlan.amount_sek.toLocaleString('sv-SE')} kr</span>
+                      </div>
+                      <div className="montrose-dash__stat">
+                        <span className="montrose-dash__stat-label">Målprofil</span>
+                        <span className="montrose-dash__stat-value">
+                          {Math.round(montroseBuyPlan.target_equity_share * 100)} % aktier ·{' '}
+                          {Math.round((1 - montroseBuyPlan.target_equity_share) * 100)} % ränta
+                        </span>
+                      </div>
+                    </div>
+                    <div className="montrose-dash__split">
+                      <p className="montrose-dash__split-title small">Så här fördelas köpet</p>
+                      <ul className="montrose-dash__split-list">
+                        {montroseBuyPlan.buy_lines.map((line, i) => (
+                          <li key={`${line.target_fund_name}-${i}`} className="montrose-dash__split-item">
+                            <span className="montrose-dash__split-name">{line.target_fund_name}</span>
+                            <span className="montrose-dash__split-detail muted small">
+                              {line.amount_sek.toLocaleString('sv-SE')} kr · ca {Math.round(line.target_weight * 100)} %
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="montrose-dash__sources">
+                      <p className="montrose-dash__sources-title small muted">Bytet avser idag dessa innehav</p>
+                      <ul className="montrose-dash__sources-list">
+                        {montroseBuyPlan.source_holdings.map((h, i) => (
+                          <li key={`${h.name}-${i}`}>
+                            <span>{h.name}</span>
+                            <span className="muted"> {h.value_sek.toLocaleString('sv-SE')} kr</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-primary montrose-dash__cta"
+                      disabled={!canMontrose || montroseBusy}
+                      onClick={() => void prepareMontrose()}
+                    >
+                      {montroseBusy ? 'Förbereder biljetter…' : 'Förbered köp i Montrose'}
+                    </button>
+                  </div>
+                )}
+                {montroseError && (
+                  <p className="error small montrose-dash__error" role="alert">
+                    {montroseError}
+                  </p>
+                )}
+              </section>
+            )}
 
             <section className="surface step-animate">
               <h2>Buffert</h2>
@@ -249,7 +398,9 @@ export function Dashboard() {
               <ul className="issues">
                 {data.alerts.map((a) => (
                   <li key={a.message}>
-                    <span className="pill" data-severity={a.severity}>{severitySv(a.severity)}</span>{' '}
+                    <span className="pill" data-severity={a.severity}>
+                      {severitySv(a.severity)}
+                    </span>{' '}
                     <span className="small">{a.message}</span>
                   </li>
                 ))}
@@ -264,11 +415,33 @@ export function Dashboard() {
             </section>
 
             <section className="surface step-animate">
+              <h2>Innehav</h2>
+              <div className="holdings">
+                {data.holdings.map((h) => (
+                  <article key={String(h.id)} className="holding">
+                    <h3>{String(h.name)}</h3>
+                    <p className="muted small">
+                      {Number(h.value_sek).toLocaleString('sv-SE')} kr · Avgift {String(h.ongoing_fee_pct)} % · Domicil {String(h.domicile)} · Konto{' '}
+                      {String(h.vehicle)}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="surface step-animate">
               <h2>Förslag</h2>
               <ul className="plain">
                 {(analysis.suggested_funds || []).map((s) => (
                   <li key={s.name} style={{ marginBottom: '0.65rem' }}>
                     <strong>{s.name}</strong>
+                    {s.target_weight != null && (
+                      <span className="muted small">
+                        {' '}
+                        · ca {Math.round(s.target_weight * 100)} % av målportföljen
+                        {s.montrose_orderbook_id != null ? ` (Montrose ${s.montrose_orderbook_id})` : ''}
+                      </span>
+                    )}
                     <div className="muted small">{s.rationale}</div>
                   </li>
                 ))}
@@ -281,7 +454,9 @@ export function Dashboard() {
           <div className="surface step-animate">
             <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
               <h1 style={{ margin: '0 0 0.35rem' }}>Profil</h1>
-              <Link className="btn-ghost" to="/onboarding">Uppdatera profil</Link>
+              <Link className="btn-ghost" to="/onboarding">
+                Uppdatera profil
+              </Link>
             </div>
             <p className="muted small" style={{ marginBottom: '1.25rem' }}>
               Din spararprofil används för att anpassa analysen till dina mål.
@@ -293,9 +468,10 @@ export function Dashboard() {
                 { label: 'Sparsyfte', value: savingsPurposeSv(data.profile.savings_purpose) },
                 {
                   label: 'Månadssparande',
-                  value: data.profile.monthly_contribution_sek != null
-                    ? `${data.profile.monthly_contribution_sek.toLocaleString('sv-SE')} kr`
-                    : '—',
+                  value:
+                    data.profile.monthly_contribution_sek != null
+                      ? `${data.profile.monthly_contribution_sek.toLocaleString('sv-SE')} kr`
+                      : '—',
                 },
                 {
                   label: 'Buffert uppfylld',
@@ -319,7 +495,9 @@ export function Dashboard() {
 
         {tab === 'tracker' && <TrackerTab holdings={data.holdings} />}
       </div>
-    </Shell>
+      </Shell>
+      {montroseResult ? <MontroseTicketsModal result={montroseResult} onClose={closeMontroseModal} /> : null}
+    </>
   )
 }
 

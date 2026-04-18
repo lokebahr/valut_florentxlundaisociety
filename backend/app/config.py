@@ -42,6 +42,10 @@ class Config:
     MONTROSE_SCOPE = os.environ.get("MONTROSE_SCOPE", "mcp")
     MONTROSE_CLIENT_NAME = os.environ.get("MONTROSE_CLIENT_NAME", "Valut")
 
+    # Optional: HTTP microservice that returns Tink-shaped accounts (mock or future provider).
+    HOLDINGS_SERVICE_URL = os.environ.get("HOLDINGS_SERVICE_URL", "")
+    HOLDINGS_SERVICE_TIMEOUT = int(os.environ.get("HOLDINGS_SERVICE_TIMEOUT", "15"))
+
 
 def load_config(app):
     app.config.from_object(Config)

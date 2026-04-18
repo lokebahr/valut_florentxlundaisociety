@@ -10,6 +10,7 @@ from app.api.tink import sync_portfolio_for_user
 from app.auth_tokens import encode_user_token
 from app.config import Config
 from app.models import OnboardingProfile, User
+from app.services.holdings_service_client import HoldingsServiceError
 from app.services.tink_client import TinkClient
 
 bp = Blueprint("auth", __name__, url_prefix="/api/auth")
@@ -120,6 +121,8 @@ def sign_in_with_tink():
 
     try:
         portfolio = sync_portfolio_for_user(user, client, token_payload, access_token, credentials_id)
+    except HoldingsServiceError as exc:
+        return jsonify({"error": "Holdings-tjänsten svarade inte.", "detail": str(exc)}), 502
     except HTTPError as exc:
         return jsonify({"error": "Tink bankdata (konton eller transaktioner) misslyckades.", "detail": str(exc)}), 502
 

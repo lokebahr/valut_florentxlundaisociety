@@ -4,6 +4,18 @@ from typing import Any
 
 from app.config import Config
 
+# Montrose orderbookId (reference). Only these two may be recommended to consumers.
+LF_GLOBAL_INDEX = {
+    "name": "Länsförsäkringar Global Index",
+    "montrose_orderbook_id": 3361,
+    "role": "equity",
+}
+LF_SHORT_BOND = {
+    "name": "Länsförsäkringar Kort Räntefond",
+    "montrose_orderbook_id": 5674,
+    "role": "fixed_income",
+}
+
 
 def _target_equity_share(risk_tolerance: int | None, horizon_years: int | None) -> float:
     r = 3 if risk_tolerance is None else max(1, min(5, risk_tolerance))
@@ -138,16 +150,24 @@ def analyze_holdings(
             ],
         }
 
+    w_eq = round(target_eq, 3)
+    w_bond = round(1.0 - target_eq, 3)
     suggestions = [
         {
-            "name": "Länsförsäkringar Global Indexnära",
-            "rationale": "Låg avgift, bred global indexering — minskar kostnadsrisk (French, 2008).",
-            "expected_role": "Global kärna med låg avgift",
+            "name": LF_GLOBAL_INDEX["name"],
+            "montrose_orderbook_id": LF_GLOBAL_INDEX["montrose_orderbook_id"],
+            "role": LF_GLOBAL_INDEX["role"],
+            "target_weight": w_eq,
+            "rationale": "Global aktieindex — målaktieandel styrs av din risk och sparhorisont (Markowitz, 1952; Merton, 1969).",
+            "expected_role": "Aktiedel i portföljen",
         },
         {
-            "name": "Avanza Global eller motsvarande bred världs-ETF",
-            "rationale": "Enkel diversifiering; kombinera med svensk indexfond endast om du medvetet vill ha SE-exponering.",
-            "expected_role": "Global kärna",
+            "name": LF_SHORT_BOND["name"],
+            "montrose_orderbook_id": LF_SHORT_BOND["montrose_orderbook_id"],
+            "role": LF_SHORT_BOND["role"],
+            "target_weight": w_bond,
+            "rationale": "Kort ränta som stabil del och komplement till aktier — passar den räntedel som motsvarar din profil.",
+            "expected_role": "Räntedel i portföljen",
         },
     ]
 
@@ -165,6 +185,146 @@ def analyze_holdings(
             {"label": "Markowitz (1952)", "detail": "Portföljval."},
             {"label": "Fama & French (1993)", "detail": "Gemensamma riskfaktorer för aktier och räntor — motiv för bred exponering."},
         ],
+    }
+
+
+def _fund_label_for_match(name: str) -> str:
+    """Use the concrete fund name before alternatives like ' eller motsvarande …'."""
+    return (name.split(" eller ", 1)[0] or name).strip()
+
+
+def _holding_matches_suggestion(holding_name: str, suggestion_label: str) -> bool:
+    h = _fund_label_for_match(holding_name).casefold()
+    s = suggestion_label.casefold()
+    if len(s) < 4 or len(h) < 4:
+        return False
+    return s in h or h in s
+
+
+def suggestion_match_labels(suggested_funds: list[dict[str, Any]]) -> list[str]:
+    labels: list[str] = []
+    for item in suggested_funds:
+        raw = (item.get("name") or "").strip()
+        lab = _fund_label_for_match(raw)
+        if len(lab) >= 4:
+            labels.append(lab)
+    return labels
+
+
+def holdings_aligned_with_suggestions(
+    holdings: list[dict[str, Any]],
+    suggested_funds: list[dict[str, Any]],
+    *,
+    min_value_coverage: float = 0.85,
+) -> bool:
+    """
+    True when most portfolio value sits in holdings whose names match at least one suggested fund.
+    If there are no usable suggestion labels, treated as aligned (nothing to switch toward).
+    """
+    labels = suggestion_match_labels(suggested_funds)
+    if not labels:
+        return True
+    total = sum(float(h.get("value_sek") or 0) for h in holdings)
+    if total <= 0:
+        return False
+    matched = 0.0
+    for h in holdings:
+        name = h.get("name") or ""
+        v = float(h.get("value_sek") or 0)
+        if any(_holding_matches_suggestion(name, lab) for lab in labels):
+            matched += v
+    return (matched / total) >= min_value_coverage
+
+
+def build_montrose_buy_plan(
+    holdings: list[dict[str, Any]],
+    suggested_funds: list[dict[str, Any]],
+    *,
+    target_equity_share: float | None = None,
+) -> dict[str, Any] | None:
+    """
+    Montrose **Buy** lines for value in holdings that do not match any recommended instrument,
+    split between equity and fixed income using ``target_equity_share`` (same as profile target).
+    """
+    labels = suggestion_match_labels(suggested_funds)
+    if not labels or not suggested_funds:
+        return None
+    source_holdings: list[dict[str, Any]] = []
+    total = 0.0
+    for h in holdings:
+        name = h.get("name") or ""
+        v = float(h.get("value_sek") or 0)
+        if v <= 0:
+            continue
+        if any(_holding_matches_suggestion(name, lab) for lab in labels):
+            continue
+        total += v
+        source_holdings.append({"name": name, "value_sek": int(round(v))})
+    if total <= 0:
+        return None
+
+    amount_total = int(round(total))
+    n = len(suggested_funds)
+    weights: list[float] = []
+    teq = target_equity_share
+    if teq is None:
+        teq = float(suggested_funds[0].get("target_weight") or 0.6)
+    teq = max(0.0, min(1.0, teq))
+    for i, s in enumerate(suggested_funds):
+        tw = s.get("target_weight")
+        if tw is not None:
+            weights.append(float(tw))
+        elif n == 2 and i == 0:
+            weights.append(teq)
+        elif n == 2 and i == 1:
+            weights.append(1.0 - teq)
+        else:
+            weights.append(1.0 / max(1, n))
+    s_sum = sum(weights)
+    if s_sum <= 0:
+        return None
+    weights = [w / s_sum for w in weights]
+
+    buy_lines: list[dict[str, Any]] = []
+    if n == 2:
+        a0 = int(round(amount_total * weights[0]))
+        a1 = amount_total - a0
+        parts = [a0, a1]
+    else:
+        parts = []
+        acc = 0
+        for i, w in enumerate(weights):
+            if i < n - 1:
+                p = int(round(amount_total * w))
+                parts.append(p)
+                acc += p
+            else:
+                parts.append(amount_total - acc)
+
+    for s, amt in zip(suggested_funds, parts):
+        if amt <= 0:
+            continue
+        nm = (s.get("name") or "").strip()
+        if not nm:
+            continue
+        ob = s.get("montrose_orderbook_id")
+        line: dict[str, Any] = {
+            "target_fund_name": nm,
+            "amount_sek": amt,
+            "target_weight": round(float(s.get("target_weight") or 0.0), 3),
+        }
+        if ob is not None:
+            line["montrose_orderbook_id"] = int(ob)
+        buy_lines.append(line)
+
+    if not buy_lines:
+        return None
+
+    return {
+        "amount_sek": amount_total,
+        "target_equity_share": round(teq, 3),
+        "buy_lines": buy_lines,
+        "source_holdings": source_holdings,
     }
 
 

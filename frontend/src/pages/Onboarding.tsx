@@ -126,14 +126,14 @@ function PortfolioChart({ riskLevel }: { riskLevel: number }) {
 
   const [goodPts, setGoodPts] = useState(() => parsePts(target.goodPoints))
   const [badPts,  setBadPts]  = useState(() => parsePts(target.badPoints))
-  const [goodEndY, setGoodEndY] = useState(target.goodEndY)
-  const [badEndY,  setBadEndY]  = useState(target.badEndY)
+  const [goodEndY, setGoodEndY] = useState<number>(() => target.goodEndY)
+  const [badEndY, setBadEndY] = useState<number>(() => target.badEndY)
 
   // Refs track the *current* animated position so mid-flight interruptions are smooth
   const curGood   = useRef(parsePts(target.goodPoints))
   const curBad    = useRef(parsePts(target.badPoints))
-  const curGoodEY = useRef(target.goodEndY)
-  const curBadEY  = useRef(target.badEndY)
+  const curGoodEY = useRef<number>(target.goodEndY)
+  const curBadEY = useRef<number>(target.badEndY)
   const rafRef    = useRef<number | null>(null)
 
   useEffect(() => {
@@ -324,7 +324,7 @@ export function Onboarding() {
   const [tinkInfo, setTinkInfo] = useState<TinkLinkInfo | null>(null)
   const [connectData, setConnectData] = useState<ConnectPayload | null>(null)
   const [orderFrom, setOrderFrom] = useState('Nordea Global Climate Impact')
-  const [orderTo, setOrderTo] = useState('Länsförsäkringar Global Indexnära')
+  const [orderTo, setOrderTo] = useState('Länsförsäkringar Global Index')
   const [orderAmount, setOrderAmount] = useState<number | null>(50_000)
   const [profileLoading, setProfileLoading] = useState(true)
   const [touched, setTouched] = useState<Set<string>>(new Set())

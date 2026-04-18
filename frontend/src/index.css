@@ -20,6 +20,10 @@
   --font-display: 'Fraunces', Georgia, serif;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --enter-duration: 0.5s;
+  /* Aliaser för komponenter som använder kortare token-namn */
+  --surface: var(--bg-elevated);
+  --border: var(--line);
+  --text: var(--ink);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1865,3 +1869,296 @@ ul.plain li {
 }
 
 .goal-progress__label-sub { margin-top: 0.1rem; }
+
+/* Dashboard — Montrose */
+.montrose-dash {
+  background: linear-gradient(165deg, var(--bg-elevated) 0%, rgba(228, 237, 233, 0.35) 100%);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.montrose-dash__intro {
+  max-width: 40rem;
+}
+
+.montrose-dash__heading {
+  margin: 0 0 0.5rem;
+}
+
+.montrose-dash__text {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.montrose-dash__connect,
+.montrose-dash__plan {
+  margin-top: 1.25rem;
+}
+
+.montrose-dash__empty,
+.montrose-dash__error {
+  margin-top: 1rem;
+}
+
+.montrose-dash__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.montrose-dash__stat {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+}
+
+.montrose-dash__stat-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.montrose-dash__stat-value {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.montrose-dash__split {
+  background: rgba(42, 77, 66, 0.06);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.montrose-dash__split-title {
+  margin: 0 0 0.65rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.montrose-dash__split-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.montrose-dash__split-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.montrose-dash__split-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.montrose-dash__split-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.montrose-dash__sources {
+  margin-bottom: 1.25rem;
+}
+
+.montrose-dash__sources-title {
+  margin: 0 0 0.5rem;
+}
+
+.montrose-dash__sources-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.88rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.montrose-dash__cta {
+  min-width: 12rem;
+}
+
+.montrose-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: montrose-modal-enter 0.35s var(--ease-out);
+}
+
+@keyframes montrose-modal-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.montrose-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  border: none;
+  padding: 0;
+  background: rgba(28, 36, 48, 0.48);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+}
+
+.montrose-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 28rem);
+  max-height: min(90vh, 36rem);
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 8px 40px rgba(28, 36, 48, 0.18);
+  padding: 1.5rem 1.5rem 1.35rem;
+  animation: montrose-panel-enter 0.4s var(--ease-out);
+}
+
+@keyframes montrose-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.montrose-modal__close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+
+.montrose-modal__header {
+  padding-right: 2rem;
+  margin-bottom: 1.25rem;
+}
+
+.montrose-modal__eyebrow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.35rem;
+}
+
+.montrose-modal__title {
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  margin: 0 0 0.5rem;
+}
+
+.montrose-modal__lede {
+  margin: 0 0 0.5rem;
+  line-height: 1.5;
+}
+
+.montrose-modal__hint {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.montrose-ticket-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.montrose-ticket {
+  background: linear-gradient(135deg, rgba(42, 77, 66, 0.07) 0%, var(--bg-elevated) 60%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.montrose-ticket__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.montrose-ticket__step {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.montrose-ticket__name {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.montrose-ticket__amount {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.montrose-ticket__cta {
+  text-align: center;
+  text-decoration: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.montrose-ticket__cta:hover {
+  text-decoration: none;
+}
+
+.montrose-ticket__cta-fallback {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .montrose-modal,
+  .montrose-modal__panel {
+    animation: none;
+  }
+}

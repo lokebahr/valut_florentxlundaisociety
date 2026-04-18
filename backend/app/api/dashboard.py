@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from flask import Blueprint, jsonify, request
 
@@ -9,7 +10,12 @@ from app.config import Config
 from app.models import FundOrder, MontroseConnection, OnboardingProfile, PortfolioSnapshot, RebalanceAlert
 from app.services.montrose_mcp import McpError, McpToolError, MontroseMcpClient, MontroseMcpConfig
 from app.services.montrose_oauth import MontroseAuthError, get_valid_montrose_access_token
-from app.services.portfolio_analysis import analyze_holdings, build_rebalance_alerts
+from app.services.portfolio_analysis import (
+    analyze_holdings,
+    build_montrose_buy_plan,
+    build_rebalance_alerts,
+    holdings_aligned_with_suggestions,
+)
 
 bp = Blueprint("dashboard", __name__, url_prefix="/api/dashboard")
 
@@ -45,6 +51,15 @@ def overview():
     alerts = build_rebalance_alerts(analysis)
     montrose_row = MontroseConnection.get_or_none(MontroseConnection.user == user)
     connected = montrose_row is not None and bool((montrose_row.access_token or "").strip())
+    suggested = analysis.get("suggested_funds") or []
+    holdings_match_recos = holdings_aligned_with_suggestions(holdings, suggested)
+    show_montrose = not holdings_match_recos
+    teq = (analysis.get("profile_targets") or {}).get("target_equity_share")
+    buy_plan = (
+        build_montrose_buy_plan(holdings, suggested, target_equity_share=float(teq) if teq is not None else None)
+        if show_montrose
+        else None
+    )
     return jsonify(
         {
             "profile": {
@@ -61,6 +76,8 @@ def overview():
             "montrose_client_configured": True,
             "montrose_connected": connected,
             "montrose_enabled": connected,
+            "montrose_show_prepare_switch": show_montrose,
+            "montrose_buy_plan": buy_plan,
         }
     )
 
@@ -68,8 +85,8 @@ def overview():
 @bp.post("/montrose/prepare-switch")
 def montrose_prepare_switch():
     """
-    Prepare two Montrose trade tickets (Sell old fund, Buy new fund) for the end user to execute.
-    Uses the logged-in user's stored Montrose OAuth access token (refreshed if needed).
+    Prepare a **Buy** ticket in Montrose from :func:`build_montrose_buy_plan` (holdings vs recommendations).
+    Request body may include optional ``account_id`` only.
     """
     user = current_user()
     if not user:
@@ -79,20 +96,45 @@ def montrose_prepare_switch():
     except MontroseAuthError as exc:
         return jsonify({"error": str(exc)}), 401
 
-    data = request.get_json(silent=True) or {}
-    sell_name = (data.get("sell_name") or "").strip()
-    buy_name = (data.get("buy_name") or "").strip()
-    amount_sek = data.get("amount_sek")
-    account_id = (data.get("account_id") or "").strip() or None
+    snap = (
+        PortfolioSnapshot.select()
+        .where(PortfolioSnapshot.user == user)
+        .order_by(PortfolioSnapshot.created_at.desc())
+        .first()
+    )
+    if not snap:
+        return jsonify({"error": "Ingen kopplad bank ännu."}), 404
+    profile = OnboardingProfile.get(OnboardingProfile.user == user)
+    payload = json.loads(snap.normalized_json)
+    holdings = payload.get("holdings") or []
+    analysis = payload.get("analysis")
+    eff_risk = profile.adjusted_risk_tolerance or profile.risk_tolerance
+    if not analysis:
+        analysis = analyze_holdings(
+            {
+                "risk_tolerance": eff_risk,
+                "time_horizon_years": profile.time_horizon_years,
+                "savings_purpose": profile.savings_purpose,
+            },
+            holdings,
+        )
+    suggested = analysis.get("suggested_funds") or []
+    if holdings_aligned_with_suggestions(holdings, suggested):
+        return jsonify(
+            {"error": "Dina innehav följer redan rekommendationerna. Köporder via Montrose behövs inte."}
+        ), 400
 
-    if not sell_name or not buy_name:
-        return jsonify({"error": "Ange sell_name och buy_name (fondnamn som Montrose känner igen)."}), 400
-    try:
-        amount = float(amount_sek)
-    except (TypeError, ValueError):
-        return jsonify({"error": "Ogiltigt amount_sek."}), 400
-    if amount <= 0:
-        return jsonify({"error": "amount_sek måste vara > 0."}), 400
+    teq = (analysis.get("profile_targets") or {}).get("target_equity_share")
+    plan = build_montrose_buy_plan(
+        holdings, suggested, target_equity_share=float(teq) if teq is not None else None
+    )
+    if not plan or int(plan.get("amount_sek") or 0) <= 0:
+        return jsonify(
+            {"error": "Inget köp att förbereda: inga innehav som behöver flyttas till rekommenderad fond."}
+        ), 400
+
+    data = request.get_json(silent=True) or {}
+    account_id = (data.get("account_id") or "").strip() or None
 
     client = MontroseMcpClient(
         MontroseMcpConfig(
@@ -100,25 +142,33 @@ def montrose_prepare_switch():
             timeout=Config.MONTROSE_MCP_TIMEOUT,
         )
     )
+    results: list[dict[str, Any]] = []
     try:
-        sell_raw = client.create_trade_ticket(
-            "Sell",
-            name=sell_name,
-            amount=amount,
-            account_id=account_id,
-            access_token=token,
-        )
-        buy_raw = client.create_trade_ticket(
-            "Buy",
-            name=buy_name,
-            amount=amount,
-            account_id=account_id,
-            access_token=token,
-        )
+        for line in plan.get("buy_lines") or []:
+            buy_name = str(line["target_fund_name"]).strip()
+            amount = float(line["amount_sek"])
+            ob = line.get("montrose_orderbook_id")
+            buy_raw = client.create_trade_ticket(
+                "Buy",
+                name=buy_name,
+                amount=amount,
+                orderbook_id=int(ob) if ob is not None else None,
+                account_id=account_id,
+                access_token=token,
+            )
+            results.append(
+                {
+                    "name": buy_name,
+                    "amount_sek": amount,
+                    "montrose_orderbook_id": ob,
+                    "raw": buy_raw,
+                    "decoded": MontroseMcpClient.decode_tool_text_result(buy_raw),
+                }
+            )
     except McpToolError as exc:
         return jsonify(
             {
-                "error": "Montrose kunde inte skapa biljett (kontrollera fondnamn, ticker eller orderbookId).",
+                "error": "Montrose kunde inte skapa köpbiljett (kontrollera fondnamn, ticker eller orderbookId).",
                 "detail": str(exc),
             }
         ), 422
@@ -127,15 +177,14 @@ def montrose_prepare_switch():
 
     return jsonify(
         {
-            "sell": {
-                "raw": sell_raw,
-                "decoded": MontroseMcpClient.decode_tool_text_result(sell_raw),
+            "plan": {
+                "amount_sek": plan["amount_sek"],
+                "target_equity_share": plan["target_equity_share"],
+                "buy_lines": plan["buy_lines"],
+                "source_holdings": plan["source_holdings"],
             },
-            "buy": {
-                "raw": buy_raw,
-                "decoded": MontroseMcpClient.decode_tool_text_result(buy_raw),
-            },
-            "message": "Biljetter skapade i Montrose. Slutför i Montrose / din bank enligt deras flöde.",
+            "buys": results,
+            "message": "Köpbiljett(er) skapade i Montrose. Slutför i Montrose / din bank enligt deras flöde.",
         }
     )
 
