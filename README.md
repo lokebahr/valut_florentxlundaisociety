@@ -74,7 +74,7 @@ npm run dev
 
 Opens on [http://localhost:5173](http://localhost:5173). The dev server proxies `/api` to the Flask backend automatically.
 
-### 3. Fund parser (optional)
+### 3. Fund parser
 
 Required only for live fund fact-sheet data in the AI analysis:
 
