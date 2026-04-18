@@ -14,12 +14,14 @@ def create_app():
     from app.api.analysis import bp as analysis_bp
     from app.api.auth import bp as auth_bp
     from app.api.dashboard import bp as dashboard_bp
+    from app.api.montrose import bp as montrose_bp
     from app.api.onboarding import bp as onboarding_bp
     from app.api.tink import bp as tink_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(onboarding_bp)
     app.register_blueprint(tink_bp)
+    app.register_blueprint(montrose_bp)
     app.register_blueprint(analysis_bp)
     app.register_blueprint(dashboard_bp)
 

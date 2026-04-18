@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth'
 import { BankCallback } from './pages/BankCallback'
 import { Dashboard } from './pages/Dashboard'
+import { MontroseCallback } from './pages/MontroseCallback'
 import { Home } from './pages/Home'
 import { Login } from './pages/Login'
 import { Onboarding } from './pages/Onboarding'
@@ -26,6 +27,7 @@ export default function App() {
       <Route element={<Protected />}>
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/auth/montrose-callback" element={<MontroseCallback />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

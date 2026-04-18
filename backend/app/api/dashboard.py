@@ -5,7 +5,10 @@ import json
 from flask import Blueprint, jsonify, request
 
 from app.api.deps import current_user
-from app.models import FundOrder, OnboardingProfile, PortfolioSnapshot, RebalanceAlert
+from app.config import Config
+from app.models import FundOrder, MontroseConnection, OnboardingProfile, PortfolioSnapshot, RebalanceAlert
+from app.services.montrose_mcp import McpError, McpToolError, MontroseMcpClient, MontroseMcpConfig
+from app.services.montrose_oauth import MontroseAuthError, get_valid_montrose_access_token
 from app.services.portfolio_analysis import analyze_holdings, build_rebalance_alerts
 
 bp = Blueprint("dashboard", __name__, url_prefix="/api/dashboard")
@@ -45,6 +48,8 @@ def overview():
         snap.save()
 
     alerts = build_rebalance_alerts(analysis)
+    montrose_row = MontroseConnection.get_or_none(MontroseConnection.user == user)
+    connected = montrose_row is not None and bool((montrose_row.access_token or "").strip())
     return jsonify(
         {
             "profile": {
@@ -58,6 +63,84 @@ def overview():
             "analysis": analysis,
             "alerts": alerts,
             "snapshot_at": snap.created_at.isoformat(),
+            "montrose_client_configured": True,
+            "montrose_connected": connected,
+            "montrose_enabled": connected,
+        }
+    )
+
+
+@bp.post("/montrose/prepare-switch")
+def montrose_prepare_switch():
+    """
+    Prepare two Montrose trade tickets (Sell old fund, Buy new fund) for the end user to execute.
+    Uses the logged-in user's stored Montrose OAuth access token (refreshed if needed).
+    """
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Ogiltig behörighet."}), 401
+    try:
+        token = get_valid_montrose_access_token(user)
+    except MontroseAuthError as exc:
+        return jsonify({"error": str(exc)}), 401
+
+    data = request.get_json(silent=True) or {}
+    sell_name = (data.get("sell_name") or "").strip()
+    buy_name = (data.get("buy_name") or "").strip()
+    amount_sek = data.get("amount_sek")
+    account_id = (data.get("account_id") or "").strip() or None
+
+    if not sell_name or not buy_name:
+        return jsonify({"error": "Ange sell_name och buy_name (fondnamn som Montrose känner igen)."}), 400
+    try:
+        amount = float(amount_sek)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Ogiltigt amount_sek."}), 400
+    if amount <= 0:
+        return jsonify({"error": "amount_sek måste vara > 0."}), 400
+
+    client = MontroseMcpClient(
+        MontroseMcpConfig(
+            base_url=Config.MONTROSE_MCP_BASE_URL,
+            timeout=Config.MONTROSE_MCP_TIMEOUT,
+        )
+    )
+    try:
+        sell_raw = client.create_trade_ticket(
+            "Sell",
+            name=sell_name,
+            amount=amount,
+            account_id=account_id,
+            access_token=token,
+        )
+        buy_raw = client.create_trade_ticket(
+            "Buy",
+            name=buy_name,
+            amount=amount,
+            account_id=account_id,
+            access_token=token,
+        )
+    except McpToolError as exc:
+        return jsonify(
+            {
+                "error": "Montrose kunde inte skapa biljett (kontrollera fondnamn, ticker eller orderbookId).",
+                "detail": str(exc),
+            }
+        ), 422
+    except McpError as exc:
+        return jsonify({"error": "Montrose MCP misslyckades.", "detail": str(exc)}), 502
+
+    return jsonify(
+        {
+            "sell": {
+                "raw": sell_raw,
+                "decoded": MontroseMcpClient.decode_tool_text_result(sell_raw),
+            },
+            "buy": {
+                "raw": buy_raw,
+                "decoded": MontroseMcpClient.decode_tool_text_result(buy_raw),
+            },
+            "message": "Biljetter skapade i Montrose. Slutför i Montrose / din bank enligt deras flöde.",
         }
     )
 

@@ -28,6 +28,20 @@ class Config:
 
     BUFFER_MONTHS_EXPENSES = int(os.environ.get("BUFFER_MONTHS_EXPENSES", "3"))
 
+    # Montrose MCP: OAuth client_id is obtained via POST {issuer}/register per connect flow; tokens per user in DB.
+    MONTROSE_MCP_BASE_URL = os.environ.get("MONTROSE_MCP_BASE_URL", "https://mcp.montrose.io")
+    MONTROSE_ISSUER = os.environ.get(
+        "MONTROSE_ISSUER",
+        os.environ.get("MONTROSE_MCP_ISSUER", "https://mcp.montrose.io"),
+    )
+    MONTROSE_MCP_TIMEOUT = int(os.environ.get("MONTROSE_MCP_TIMEOUT", "30"))
+    MONTROSE_REDIRECT_URI = os.environ.get(
+        "MONTROSE_REDIRECT_URI",
+        f"{os.environ.get('FRONTEND_ORIGIN', 'http://localhost:5173')}/auth/montrose-callback",
+    )
+    MONTROSE_SCOPE = os.environ.get("MONTROSE_SCOPE", "mcp")
+    MONTROSE_CLIENT_NAME = os.environ.get("MONTROSE_CLIENT_NAME", "Valut")
+
 
 def load_config(app):
     app.config.from_object(Config)
