@@ -7,7 +7,6 @@ import { StepProgress } from '../components/StepProgress'
 import { imageAlt, images } from '../content/images'
 
 const STEP_LABELS = [
-  'Vårt uppdrag',
   'Mål och risk',
   'Din ekonomi',
   'Bankkoppling',
@@ -20,14 +19,7 @@ const STEP_LABELS = [
 
 const TOTAL_STEPS = STEP_LABELS.length
 
-type Mission = {
-  title: string
-  mission: string
-  sources: { label: string; url: string }[]
-  quote: string
-}
-
-type TinkLinkInfo = { mode: 'mock' | 'tink'; url?: string; message?: string; redirect_uri?: string }
+type TinkLinkInfo = { url: string; redirect_uri: string }
 
 type ConnectPayload = {
   buffer: Record<string, unknown>
@@ -36,11 +28,19 @@ type ConnectPayload = {
   buffer_accounts?: { id?: string; name: string; liquid_sek: number }[]
 }
 
+type SnapshotResponse = ConnectPayload & {
+  accounts?: unknown
+  tink_debug?: Record<string, unknown>
+  tink_oauth_token?: unknown
+  tink_transactions?: unknown
+  tink_transactions_error?: string
+  credentials_id?: string
+}
+
 export function Onboarding() {
   const navigate = useNavigate()
   const [search] = useSearchParams()
   const [step, setStep] = useState(0)
-  const [mission, setMission] = useState<Mission | null>(null)
   const [riskTolerance, setRiskTolerance] = useState(3)
   const [timeHorizonYears, setTimeHorizonYears] = useState(10)
   const [savingsPurpose, setSavingsPurpose] = useState('pension')
@@ -57,19 +57,52 @@ export function Onboarding() {
   const [orderTo, setOrderTo] = useState('Länsförsäkringar Global Indexnära')
   const [orderAmount, setOrderAmount] = useState(50_000)
   const [error, setError] = useState<string | null>(null)
+  const [tinkDebug, setTinkDebug] = useState<unknown>(null)
 
   useEffect(() => {
     if (search.get('tink') !== 'connected') return
     ;(async () => {
       try {
-        const snap = await api<ConnectPayload & { accounts?: unknown }>('/api/tink/snapshot')
+        const snap = await api<SnapshotResponse>('/api/tink/snapshot')
         setConnectData({
           buffer: snap.buffer as ConnectPayload['buffer'],
           holdings: snap.holdings as ConnectPayload['holdings'],
           analysis: snap.analysis as ConnectPayload['analysis'],
           buffer_accounts: snap.buffer_accounts,
         })
-        setStep(4)
+        const hasServerTinkDump =
+          (snap.tink_debug != null && typeof snap.tink_debug === 'object') ||
+          snap.tink_oauth_token != null ||
+          snap.tink_transactions != null ||
+          snap.tink_transactions_error != null
+        const fromServer = hasServerTinkDump
+          ? snap.tink_debug != null && typeof snap.tink_debug === 'object'
+            ? {
+                ...snap.tink_debug,
+                accounts: snap.accounts,
+                _source: 'server_snapshot',
+              }
+            : {
+                tink_oauth_token: snap.tink_oauth_token,
+                accounts: snap.accounts,
+                tink_transactions: snap.tink_transactions,
+                ...(snap.tink_transactions_error != null
+                  ? { tink_transactions_error: snap.tink_transactions_error }
+                  : {}),
+                ...(snap.credentials_id != null && snap.credentials_id !== ''
+                  ? { credentials_id: snap.credentials_id }
+                  : {}),
+                _source: 'server_snapshot',
+              }
+          : null
+        setTinkDebug(
+          fromServer ?? {
+            _note:
+              'Ingen sparad Tink-debug i denna snapshot (äldre koppling eller tom Tink-respons). Visar endast sparade konton.',
+            accounts: snap.accounts,
+          },
+        )
+        setStep(3)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Kunde inte läsa bankdata.')
       }
@@ -77,12 +110,9 @@ export function Onboarding() {
   }, [search])
 
   useEffect(() => {
-    api<Mission>('/api/onboarding/mission')
-      .then(setMission)
-      .catch(() => setError('Kunde inte ladda uppdragstexten.'))
     api<TinkLinkInfo>('/api/tink/link')
       .then(setTinkInfo)
-      .catch(() => undefined)
+      .catch((e) => setError(e instanceof Error ? e.message : 'Kunde inte hämta Tink-länk.'))
   }, [])
 
   const profilePayload = useMemo(
@@ -131,18 +161,6 @@ export function Onboarding() {
     }
   }
 
-  async function connectMock() {
-    setError(null)
-    try {
-      await persistProfile()
-      const res = await api<ConnectPayload>('/api/tink/connect-mock', { method: 'POST' })
-      setConnectData(res)
-      setStep(4)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Anslutningen misslyckades.')
-    }
-  }
-
   async function finishOnboarding(e: FormEvent) {
     e.preventDefault()
     setError(null)
@@ -162,7 +180,7 @@ export function Onboarding() {
         method: 'POST',
         body: { from_name: orderFrom, to_name: orderTo, amount_sek: orderAmount },
       })
-      setStep(8)
+      setStep(7)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ordern kunde inte läggas.')
     }
@@ -184,42 +202,7 @@ export function Onboarding() {
           </p>
         )}
 
-        {step === 0 && mission && (
-          <div key={step} className="step-animate stack">
-            <div className="intro-split">
-              <HeroImage src={images.seaCalm} alt={imageAlt.seaCalm} />
-              <div className="surface surface--quiet">
-                <p className="muted small" style={{ marginBottom: '0.5rem' }}>
-                  {mission.title}
-                </p>
-                <h2 style={{ marginTop: 0 }}>Varför vi finns</h2>
-                <p className="lead">{mission.mission}</p>
-                <blockquote>{mission.quote}</blockquote>
-                <h3 className="muted" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.95rem', fontWeight: 600 }}>
-                  Källor
-                </h3>
-                <ul className="sources muted small">
-                  {mission.sources.map((s) => (
-                    <li key={s.url}>
-                      <a href={s.url} target="_blank" rel="noreferrer">
-                        {s.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-                <p className="muted small">
-                  Passar det här dig hjälper vi dig jämföra dina faktiska produkter med dina mål — utan att lägga tid på
-                  produktpaket som inte är byggda för dig.
-                </p>
-                <button type="button" className="btn-primary" onClick={() => setStep(1)}>
-                  Fortsätt
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {step === 1 && (
+        {step === 0 && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Mål och risk</h2>
@@ -273,7 +256,7 @@ export function Onboarding() {
           </section>
         )}
 
-        {step === 2 && (
+        {step === 1 && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Din ekonomi</h2>
@@ -316,39 +299,58 @@ export function Onboarding() {
           </section>
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <section key={step} className="surface step-animate stack">
             <div>
-              <h2>Koppla din bank</h2>
+              <h2>Bankkoppling</h2>
               <p className="muted">
-                Vi läser konton via öppen bankkoppling. Med riktiga nycklar kan du testa Tinks testmiljö med demobank. Lokalt
-                kan du använda demonstrationsdata som liknar svenska konton och fonder.
+                Du loggade in med Tink på startsidan — då skapades ditt konto och vi hämtade dina konton. Vill du uppdatera
+                kopplingen öppnar du Tink igen.
               </p>
             </div>
-            {tinkInfo?.mode === 'tink' && tinkInfo.url && (
+            {tinkInfo && (
               <div className="callout stack stack--tight">
-                <p className="small">Öppna bankkopplingen i ett nytt fönster, logga in med demobanken och kom sedan tillbaka hit.</p>
                 <a className="btn-link" href={tinkInfo.url} target="_blank" rel="noreferrer">
-                  Öppna bankfönster
+                  Öppna Tink igen
                 </a>
                 <p className="muted small">Återhoppsadress: {tinkInfo.redirect_uri}</p>
               </div>
             )}
-            {tinkInfo?.mode === 'mock' && (
-              <p className="callout small">{tinkInfo.message ?? 'Demonstrationsläge är aktivt.'}</p>
-            )}
-            <button type="button" className="btn-primary" onClick={connectMock}>
-              Anslut med demonstrationsdata
+            <button type="button" className="btn-primary" onClick={next}>
+              Nästa
             </button>
           </section>
         )}
 
-        {step === 4 && connectData && (
+        {step === 3 && connectData && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Buffert</h2>
               <p className="muted">En likvid buffert minskar risken att behöva sälja placerat kapital i otid.</p>
             </div>
+            {tinkDebug != null && (
+              <details className="callout stack stack--tight">
+                <summary className="small" style={{ cursor: 'pointer' }}>
+                  Rådata från Tink (JSON)
+                </summary>
+                <p className="muted small" style={{ marginBottom: 0 }}>
+                  OAuth-svar visar kortade token-värden. Konton och transaktioner är oförändrade svar från Tinks API.
+                </p>
+                <pre
+                  className="small"
+                  style={{
+                    overflow: 'auto',
+                    maxHeight: 'min(70vh, 36rem)',
+                    marginTop: '0.75rem',
+                    padding: '0.75rem',
+                    background: 'var(--color-surface-elevated, #f4f4f5)',
+                    borderRadius: '8px',
+                  }}
+                >
+                  {JSON.stringify(tinkDebug, null, 2)}
+                </pre>
+              </details>
+            )}
             <p>
               Mål: cirka{' '}
               {(connectData.buffer as { target_buffer_sek?: number }).target_buffer_sek?.toLocaleString('sv-SE')} kronor ·{' '}
@@ -361,13 +363,13 @@ export function Onboarding() {
                 </li>
               ))}
             </ul>
-            <button type="button" className="btn-primary" onClick={() => setStep(5)}>
+            <button type="button" className="btn-primary" onClick={() => setStep(4)}>
               Nästa
             </button>
           </section>
         )}
 
-        {step === 5 && connectData && (
+        {step === 4 && connectData && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Dina innehav</h2>
@@ -398,13 +400,13 @@ export function Onboarding() {
                 </li>
               ))}
             </ul>
-            <button type="button" className="btn-primary" onClick={() => setStep(6)}>
+            <button type="button" className="btn-primary" onClick={() => setStep(5)}>
               Nästa
             </button>
           </section>
         )}
 
-        {step === 6 && connectData && (
+        {step === 5 && connectData && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Justera plan</h2>
@@ -444,13 +446,13 @@ export function Onboarding() {
                 </li>
               ))}
             </ul>
-            <button type="button" className="btn-primary" onClick={() => setStep(7)}>
+            <button type="button" className="btn-primary" onClick={() => setStep(6)}>
               Gå vidare till order
             </button>
           </section>
         )}
 
-        {step === 7 && (
+        {step === 6 && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Byt fond (övning)</h2>
@@ -476,7 +478,7 @@ export function Onboarding() {
           </section>
         )}
 
-        {step === 8 && (
+        {step === 7 && (
           <section key={step} className="surface step-animate stack">
             <HeroImage className="hero-image--compact" src={images.forestLight} alt={imageAlt.forestLight} />
             <div>

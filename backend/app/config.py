@@ -15,7 +15,6 @@ class Config:
 
     TINK_CLIENT_ID = os.environ.get("TINK_CLIENT_ID", "")
     TINK_CLIENT_SECRET = os.environ.get("TINK_CLIENT_SECRET", "")
-    TINK_USE_MOCK = os.environ.get("TINK_USE_MOCK", "true").lower() in ("1", "true", "yes")
     TINK_LINK_BASE = os.environ.get(
         "TINK_LINK_BASE",
         "https://link.tink.com/1.0/transactions/connect-accounts",
@@ -24,7 +23,7 @@ class Config:
     FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")
     TINK_REDIRECT_URI = os.environ.get(
         "TINK_REDIRECT_URI",
-        f"{os.environ.get('FRONTEND_ORIGIN', 'http://localhost:5173')}/onboarding/bank-callback",
+        f"{os.environ.get('FRONTEND_ORIGIN', 'http://localhost:5173')}/auth/tink-callback",
     )
 
     BUFFER_MONTHS_EXPENSES = int(os.environ.get("BUFFER_MONTHS_EXPENSES", "3"))

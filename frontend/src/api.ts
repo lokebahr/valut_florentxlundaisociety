@@ -21,9 +21,13 @@ export async function api<T>(
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
   const text = await res.text()
-  const data = text ? JSON.parse(text) : {}
+  const contentType = res.headers.get('content-type') || ''
+  const isJson = contentType.includes('application/json')
+  const data = text && isJson ? JSON.parse(text) : {}
   if (!res.ok) {
-    const msg = (data as { error?: string }).error || res.statusText
+    const d = data as { error?: string; detail?: string }
+    const fallback = text && !isJson ? `${res.status} ${res.statusText}` : res.statusText
+    const msg = [d.error || fallback, d.detail].filter(Boolean).join(' — ')
     throw new Error(msg)
   }
   return data as T

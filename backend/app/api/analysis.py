@@ -6,8 +6,6 @@ from flask import Blueprint, jsonify
 
 from app.api.deps import current_user
 from app.models import OnboardingProfile, PortfolioSnapshot
-from app.services.mock_portfolio import mock_tink_accounts_payload
-from app.services.normalize import normalize_holdings
 from app.services.portfolio_analysis import analyze_holdings
 
 bp = Blueprint("analysis", __name__, url_prefix="/api/analysis")
@@ -41,12 +39,3 @@ def run_analysis():
     snap.normalized_json = json.dumps(payload, ensure_ascii=False)
     snap.save()
     return jsonify({"analysis": analysis})
-
-
-@bp.get("/demo")
-def demo_without_bank():
-    """Offline demo analysis using mock holdings."""
-    accounts = mock_tink_accounts_payload()
-    holdings = normalize_holdings(accounts, use_mock_enrichment=True)
-    profile = {"risk_tolerance": 3, "time_horizon_years": 12, "savings_purpose": "pension"}
-    return jsonify({"holdings": holdings, "analysis": analyze_holdings(profile, holdings)})

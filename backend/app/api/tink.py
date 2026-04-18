@@ -2,16 +2,14 @@ from __future__ import annotations
 
 import datetime as dt
 import json
-import uuid
+from typing import Any
 
-import requests
 from flask import Blueprint, jsonify, request
 
 from app.api.deps import current_user
 from app.config import Config
 from app.models import BankConnection, OnboardingProfile, PortfolioSnapshot, User
-from app.services.mock_portfolio import mock_buffer_accounts, mock_tink_accounts_payload
-from app.services.normalize import normalize_holdings, snapshot_json
+from app.services.normalize import normalize_holdings
 from app.services.portfolio_analysis import (
     analyze_buffer,
     analyze_holdings,
@@ -21,6 +19,22 @@ from app.services.portfolio_analysis import (
 from app.services.tink_client import TinkClient, parse_token_expiry
 
 bp = Blueprint("tink", __name__, url_prefix="/api/tink")
+
+_SENSITIVE_OAUTH_KEYS = frozenset({"access_token", "refresh_token", "id_token"})
+
+
+def _redact_oauth_token_payload(payload: dict) -> dict:
+    """Return a copy safe to show in UI (tokens shortened; rest unchanged)."""
+    out = dict(payload)
+    for key in _SENSITIVE_OAUTH_KEYS:
+        val = out.get(key)
+        if not val or not isinstance(val, str):
+            continue
+        if len(val) > 14:
+            out[key] = f"{val[:6]}…{val[-4:]}"
+        else:
+            out[key] = "***"
+    return out
 
 
 def _profile_dict(user: User) -> dict:
@@ -34,92 +48,14 @@ def _profile_dict(user: User) -> dict:
     }
 
 
-@bp.get("/link")
-def link_info():
-    user = current_user()
-    if not user:
-        return jsonify({"error": "Ogiltig behörighet."}), 401
-    if Config.TINK_USE_MOCK or not (Config.TINK_CLIENT_ID and Config.TINK_CLIENT_SECRET):
-        return jsonify(
-            {
-                "mode": "mock",
-                "message": "Mock-läge: ingen Tink-nyckel eller TINK_USE_MOCK=true.",
-            }
-        )
-    client = TinkClient()
-    return jsonify(
-        {
-            "mode": "tink",
-            "url": client.build_transactions_link_url(),
-            "redirect_uri": Config.TINK_REDIRECT_URI,
-        }
-    )
-
-
-@bp.post("/connect-mock")
-def connect_mock():
-    user = current_user()
-    if not user:
-        return jsonify({"error": "Ogiltig behörighet."}), 401
-    accounts = mock_tink_accounts_payload()
-    holdings = normalize_holdings(accounts, use_mock_enrichment=True)
-    liquid = sum_liquid_sek_from_accounts(accounts)
-    profile = _profile_dict(user)
-    buffer = analyze_buffer(profile.get("disposable_income_monthly_sek"), liquid)
-    analysis = analyze_holdings(profile, holdings)
-
-    BankConnection.delete().where(BankConnection.user == user).execute()
-    BankConnection.create(
-        user=user,
-        is_mock=True,
-        credentials_id="mock",
-        access_token="mock",
-        token_expires_at=dt.datetime.utcnow() + dt.timedelta(days=3650),
-    )
-    PortfolioSnapshot.create(
-        user=user,
-        raw_json=snapshot_json(accounts),
-        normalized_json=snapshot_json(
-            {
-                "holdings": holdings,
-                "buffer": buffer,
-                "analysis": analysis,
-                "buffer_accounts": mock_buffer_accounts(),
-            }
-        ),
-    )
-    return jsonify(
-        {
-            "accounts": accounts,
-            "buffer": buffer,
-            "holdings": holdings,
-            "analysis": analysis,
-            "buffer_accounts": mock_buffer_accounts(),
-        }
-    )
-
-
-@bp.post("/finalize")
-def finalize():
-    """Exchange Tink Link `code` for user token and persist accounts (sandbox)."""
-    user = current_user()
-    if not user:
-        return jsonify({"error": "Ogiltig behörighet."}), 401
-    data = request.get_json(silent=True) or {}
-    code = data.get("code")
-    credentials_id = data.get("credentials_id")
-    if not code:
-        return jsonify({"error": "Saknar code från Tink callback."}), 400
-
-    if Config.TINK_USE_MOCK or not (Config.TINK_CLIENT_ID and Config.TINK_CLIENT_SECRET):
-        return jsonify({"error": "Använd /api/tink/connect-mock i mock-läge."}), 400
-
-    client = TinkClient()
-    token_payload = client.exchange_link_code_for_user_token(code)
-    access_token = token_payload.get("access_token")
-    if not access_token:
-        return jsonify({"error": "Kunde inte hämta access_token från Tink."}), 502
-
+def sync_portfolio_for_user(
+    user: User,
+    client: TinkClient,
+    token_payload: dict[str, Any],
+    access_token: str,
+    credentials_id: str | None,
+) -> dict[str, Any]:
+    """Persist bank connection and portfolio snapshot from a user access token (fails if Tink fails)."""
     accounts = client.fetch_accounts(access_token)
     holdings = normalize_holdings(accounts, use_mock_enrichment=False)
     liquid = sum_liquid_sek_from_accounts(accounts)
@@ -130,28 +66,45 @@ def finalize():
     BankConnection.delete().where(BankConnection.user == user).execute()
     BankConnection.create(
         user=user,
-        is_mock=False,
         credentials_id=credentials_id or "",
         access_token=access_token,
         token_expires_at=parse_token_expiry(token_payload),
     )
     buffer_accounts = list_liquid_accounts(accounts)
+    tink_transactions = client.fetch_transactions(access_token)
+
+    tink_debug: dict[str, Any] = {
+        "tink_oauth_token": _redact_oauth_token_payload(token_payload),
+        "tink_transactions": tink_transactions,
+        "credentials_id": credentials_id or "",
+    }
+
     PortfolioSnapshot.create(
         user=user,
         raw_json=json.dumps(accounts, ensure_ascii=False),
         normalized_json=json.dumps(
-            {"holdings": holdings, "buffer": buffer, "analysis": analysis, "buffer_accounts": buffer_accounts},
+            {
+                "holdings": holdings,
+                "buffer": buffer,
+                "analysis": analysis,
+                "buffer_accounts": buffer_accounts,
+                "tink_debug": tink_debug,
+            },
             ensure_ascii=False,
         ),
     )
-    return jsonify({"accounts": accounts, "buffer": buffer, "holdings": holdings, "analysis": analysis})
+    return {
+        "accounts": accounts,
+        "buffer": buffer,
+        "holdings": holdings,
+        "analysis": analysis,
+        "buffer_accounts": buffer_accounts,
+        "tink_oauth_token": tink_debug["tink_oauth_token"],
+        "tink_transactions": tink_transactions,
+    }
 
 
-@bp.get("/snapshot")
-def snapshot():
-    user = current_user()
-    if not user:
-        return jsonify({"error": "Ogiltig behörighet."}), 401
+def _latest_snapshot_payload(user: User) -> dict | None:
     snap = (
         PortfolioSnapshot.select()
         .where(PortfolioSnapshot.user == user)
@@ -159,47 +112,48 @@ def snapshot():
         .first()
     )
     if not snap:
-        return jsonify({"error": "Ingen portfölj ännu."}), 404
+        return None
     payload = json.loads(snap.normalized_json)
     raw = json.loads(snap.raw_json)
+    out: dict = {
+        "holdings": payload.get("holdings") or [],
+        "buffer": payload.get("buffer") or {},
+        "analysis": payload.get("analysis") or {},
+        "buffer_accounts": payload.get("buffer_accounts") or [],
+        "accounts": raw,
+    }
+    td = payload.get("tink_debug")
+    if isinstance(td, dict):
+        out["tink_debug"] = td
+        out["tink_oauth_token"] = td.get("tink_oauth_token")
+        out["tink_transactions"] = td.get("tink_transactions")
+        if td.get("tink_transactions_error"):
+            out["tink_transactions_error"] = td["tink_transactions_error"]
+        if td.get("credentials_id") is not None:
+            out["credentials_id"] = td["credentials_id"]
+    return out
+
+
+@bp.get("/link")
+def link_info():
+    """Public: URL to start Tink Link (same flow for first-time sign-in and returning users)."""
+    if not Config.TINK_CLIENT_ID or not Config.TINK_CLIENT_SECRET:
+        return jsonify({"error": "Tink är inte konfigurerat (TINK_CLIENT_ID / TINK_CLIENT_SECRET)."}), 503
+    client = TinkClient()
     return jsonify(
         {
-            "holdings": payload.get("holdings") or [],
-            "buffer": payload.get("buffer") or {},
-            "analysis": payload.get("analysis") or {},
-            "buffer_accounts": payload.get("buffer_accounts") or [],
-            "accounts": raw,
+            "url": client.build_transactions_link_url(),
+            "redirect_uri": Config.TINK_REDIRECT_URI,
         }
     )
 
 
-@bp.post("/ensure-external-user")
-def ensure_external_user():
+@bp.get("/snapshot")
+def snapshot():
     user = current_user()
     if not user:
         return jsonify({"error": "Ogiltig behörighet."}), 401
-    if user.tink_external_user_id:
-        return jsonify({"external_user_id": user.tink_external_user_id})
-    if Config.TINK_USE_MOCK or not (Config.TINK_CLIENT_ID and Config.TINK_CLIENT_SECRET):
-        ext = f"valut_mock_{user.id}"
-        user.tink_external_user_id = ext
-        user.save()
-        return jsonify({"external_user_id": ext})
-
-    ext = f"valut_{user.id}_{uuid.uuid4().hex[:10]}"
-    client = TinkClient()
-    token = client.client_credentials_token("user:create")
-    access = token.get("access_token")
-    if not access:
-        return jsonify({"error": "Kunde inte autentisera mot Tink (user:create)."}), 502
-    r = requests.post(
-        f"{Config.TINK_API_BASE.rstrip('/')}/api/v1/user/create",
-        headers={"Authorization": f"Bearer {access}", "Content-Type": "application/json"},
-        json={"external_user_id": ext, "market": "SE", "locale": "sv_SE"},
-        timeout=30,
-    )
-    if not r.ok:
-        return jsonify({"error": "Tink user/create misslyckades.", "detail": r.text}), 502
-    user.tink_external_user_id = ext
-    user.save()
-    return jsonify({"external_user_id": ext})
+    payload = _latest_snapshot_payload(user)
+    if not payload:
+        return jsonify({"error": "Ingen portfölj ännu."}), 404
+    return jsonify(payload)

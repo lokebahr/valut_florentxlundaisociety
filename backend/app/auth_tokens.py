@@ -1,17 +1,8 @@
 import datetime as dt
 
 import jwt
-from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.config import Config
-
-
-def hash_password(password: str) -> str:
-    return generate_password_hash(password)
-
-
-def verify_password(password_hash: str, password: str) -> bool:
-    return check_password_hash(password_hash, password)
 
 
 def encode_user_token(user_id: int) -> str:

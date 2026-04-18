@@ -5,7 +5,6 @@ import json
 from flask import Blueprint, jsonify, request
 
 from app.api.deps import current_user
-from app.config import Config
 from app.models import FundOrder, OnboardingProfile, PortfolioSnapshot, RebalanceAlert
 from app.services.portfolio_analysis import analyze_holdings, build_rebalance_alerts
 
@@ -59,7 +58,6 @@ def overview():
             "analysis": analysis,
             "alerts": alerts,
             "snapshot_at": snap.created_at.isoformat(),
-            "tink_mock": Config.TINK_USE_MOCK,
         }
     )
 

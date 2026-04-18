@@ -8,7 +8,6 @@ from app.models.user import User
 
 class BankConnection(database.Model):
     user = ForeignKeyField(User, backref="bank_connections")
-    is_mock = BooleanField(default=True)
     credentials_id = TextField(null=True)
     access_token = TextField(null=True)
     token_expires_at = DateTimeField(null=True)

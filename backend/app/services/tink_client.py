@@ -5,6 +5,7 @@ from typing import Any
 from urllib.parse import urlencode
 
 import requests
+from requests import HTTPError
 
 from app.config import Config
 
@@ -29,7 +30,14 @@ class TinkClient:
     def _post_form(self, path: str, data: dict[str, str]) -> dict[str, Any]:
         url = f"{self._base}{path}"
         response = requests.post(url, data=data, timeout=30)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except HTTPError as exc:
+            # Include provider response payload to speed up OAuth troubleshooting.
+            detail = response.text.strip()
+            if detail:
+                raise HTTPError(f"{exc} | response: {detail}", response=response) from exc
+            raise
         return response.json()
 
     def exchange_link_code_for_user_token(self, code: str) -> dict[str, Any]:
@@ -40,11 +48,23 @@ class TinkClient:
                 "client_id": self._client_id,
                 "client_secret": self._client_secret,
                 "grant_type": "authorization_code",
+                "redirect_uri": Config.TINK_REDIRECT_URI,
             },
         )
 
     def fetch_accounts(self, user_access_token: str) -> dict[str, Any]:
         url = f"{self._base}/data/v2/accounts"
+        response = requests.get(
+            url,
+            headers={"Authorization": f"Bearer {user_access_token}"},
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def fetch_user(self, user_access_token: str) -> dict[str, Any]:
+        """Current end-user profile (user access token from Link OAuth exchange)."""
+        url = f"{self._base}/api/v1/user"
         response = requests.get(
             url,
             headers={"Authorization": f"Bearer {user_access_token}"},
