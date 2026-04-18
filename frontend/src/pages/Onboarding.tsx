@@ -56,7 +56,6 @@ const STEP_LABELS = [
   'Sparhorisont',
   'Sparmål',
   'Din ekonomi',
-  'Buffert',
   'Innehav',
   'Justera plan',
   'Klart',
@@ -487,9 +486,9 @@ export function Onboarding() {
   const [touched, setTouched] = useState<Set<string>>(new Set())
   const touch = (name: string) => setTouched((prev) => new Set([...prev, name]))
   const [error, setError] = useState<string | null>(null)
-  const [tinkDebug, setTinkDebug] = useState<unknown>(null)
   const [scenarioAnswers, setScenarioAnswers] = useState<Partial<Record<ScenarioKey, number>>>({})
   const [enriching, setEnriching] = useState(false)
+  const [enrichError, setEnrichError] = useState<string | null>(null)
   const [scenarioSubStep, setScenarioSubStep] = useState(0)
 
   type AgentIssue = {
@@ -554,39 +553,8 @@ export function Onboarding() {
           analysis: snap.analysis as ConnectPayload['analysis'],
           buffer_accounts: snap.buffer_accounts,
         })
-        const hasServerTinkDump =
-          (snap.tink_debug != null && typeof snap.tink_debug === 'object') ||
-          snap.tink_oauth_token != null ||
-          snap.tink_transactions != null ||
-          snap.tink_transactions_error != null
-        const fromServer = hasServerTinkDump
-          ? snap.tink_debug != null && typeof snap.tink_debug === 'object'
-            ? {
-                ...snap.tink_debug,
-                accounts: snap.accounts,
-                _source: 'server_snapshot',
-              }
-            : {
-                tink_oauth_token: snap.tink_oauth_token,
-                accounts: snap.accounts,
-                tink_transactions: snap.tink_transactions,
-                ...(snap.tink_transactions_error != null
-                  ? { tink_transactions_error: snap.tink_transactions_error }
-                  : {}),
-                ...(snap.credentials_id != null && snap.credentials_id !== ''
-                  ? { credentials_id: snap.credentials_id }
-                  : {}),
-                _source: 'server_snapshot',
-              }
-          : null
-        setTinkDebug(
-          fromServer ?? {
-            _note:
-              'Ingen sparad Tink-debug i denna snapshot (äldre koppling eller tom Tink-respons). Visar endast sparade konton.',
-            accounts: snap.accounts,
-          },
-        )
         setStep(1)
+        void enrichHoldings()
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Kunde inte läsa bankdata.')
       }
@@ -700,13 +668,14 @@ export function Onboarding() {
       const res = await api<ConnectPayload>('/api/tink/connect-mock', { method: 'POST' })
       setConnectData(res)
       setStep(1)
+      void enrichHoldings()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Anslutningen misslyckades.')
     }
   }
 
   useEffect(() => {
-    if (step !== 10) return
+    if (step !== 9) return
     setAgentLoading(true)
     setAgentResult(null)
     const run = async () => {
@@ -729,22 +698,21 @@ export function Onboarding() {
     run()
   }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function enrichAndAdvance() {
+  async function enrichHoldings() {
     setEnriching(true)
-    setError(null)
+    setEnrichError(null)
     try {
       const res = await api<{ holdings: ConnectPayload['holdings']; analysis: ConnectPayload['analysis'] }>(
         '/api/tink/enrich-holdings',
         { method: 'POST' },
       )
       setConnectData((prev) => prev ? { ...prev, holdings: res.holdings, analysis: res.analysis } : prev)
-      // Kick off agent analysis in the background so it's ready when the user reaches step 10
+      // Kick off agent analysis in the background so it's ready when the user reaches step 9
       agentPreloadRef.current = api<AgentResult>('/api/agent/assess', { method: 'POST' }).catch(
         (e) => ({ error: e instanceof Error ? e.message : 'Analysen misslyckades.' } as AgentResult),
       )
-      setStep(8)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Berikning misslyckades.')
+      setEnrichError(e instanceof Error ? e.message : 'Berikning misslyckades.')
     } finally {
       setEnriching(false)
     }
@@ -782,7 +750,7 @@ export function Onboarding() {
     <Shell>
       <div className="page page--wide">
         <div className="stack" style={{ marginBottom: '1.5rem' }}>
-          {step === 10 ? (
+          {step === 9 ? (
             <button
               type="button"
               className="btn-link btn-link--muted"
@@ -1162,49 +1130,13 @@ export function Onboarding() {
           </section>
         )}
 
-        {/* Step 7 — Buffer */}
+        {/* Step 7 — Holdings */}
         {step === 7 && connectData && (
           <section key={step} className="surface step-animate stack">
             <div>
-              <h2>Buffert</h2>
-              <p className="muted">En likvid buffert minskar risken att behöva sälja placerat kapital i otid.</p>
+              <h2>Dina innehav</h2>
+              <p className="muted">Här är en förenklad analys utifrån dina konton.</p>
             </div>
-            {tinkDebug != null && (
-              <details className="callout stack stack--tight">
-                <summary className="small" style={{ cursor: 'pointer' }}>
-                  Rådata från Tink (JSON)
-                </summary>
-                <p className="muted small" style={{ marginBottom: 0 }}>
-                  OAuth-svar visar kortade token-värden. Konton och transaktioner är oförändrade svar från Tinks API.
-                </p>
-                <pre
-                  className="small"
-                  style={{
-                    overflow: 'auto',
-                    maxHeight: 'min(70vh, 36rem)',
-                    marginTop: '0.75rem',
-                    padding: '0.75rem',
-                    background: 'var(--color-surface-elevated, #f4f4f5)',
-                    borderRadius: '8px',
-                  }}
-                >
-                  {JSON.stringify(tinkDebug, null, 2)}
-                </pre>
-              </details>
-            )}
-            <p>
-              Mål: cirka{' '}
-              {(connectData.buffer as { target_buffer_sek?: number }).target_buffer_sek?.toLocaleString('sv-SE')} kronor
-              ·{' '}
-              {(connectData.buffer as { meets_target?: boolean }).meets_target ? 'du når målet' : 'under målet'}.
-            </p>
-            <ul className="plain muted small">
-              {connectData.buffer_accounts?.map((b) => (
-                <li key={b.name}>
-                  {b.name}: {b.liquid_sek.toLocaleString('sv-SE')} kr
-                </li>
-              ))}
-            </ul>
             {enriching ? (
               <div className="enriching-state step-animate">
                 <div className="enriching-state__spinner" />
@@ -1215,56 +1147,52 @@ export function Onboarding() {
                 </div>
                 <p className="enriching-state__text">Hämtar fonddata från faktablad…</p>
               </div>
-            ) : (
-              <div className="step-nav">
-                <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
-                <button type="button" className="btn-primary" onClick={enrichAndAdvance}>Nästa</button>
+            ) : enrichError ? (
+              <div className="stack">
+                <p className="error">{enrichError}</p>
+                <div className="step-nav">
+                  <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
+                  <button type="button" className="btn-primary" onClick={() => void enrichHoldings()}>Försök igen</button>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="holdings">
+                  {connectData.holdings.map((h) => (
+                    <article key={String(h.id)} className="holding">
+                      <h3>{String(h.name)}</h3>
+                      <p className="muted small">{String(h.notes || '')}</p>
+                      <p className="small">
+                        Värde: {Number(h.value_sek).toLocaleString('sv-SE')} kr · Avgift: {String(h.ongoing_fee_pct)} % ·
+                        Domicil: {String(h.domicile)} · Konto: {String(h.vehicle)}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+                <h3 className="muted" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.95rem', fontWeight: 600 }}>
+                  Viktigt att veta
+                </h3>
+                <ul className="issues">
+                  {((connectData.analysis as { issues?: { title: string; body: string }[] }).issues || []).map((i) => (
+                    <li key={i.title}>
+                      <strong>{i.title}</strong>
+                      <div className="muted small" style={{ marginTop: '0.35rem' }}>
+                        {i.body}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <div className="step-nav">
+                  <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
+                  <button type="button" className="btn-primary" onClick={() => setStep(8)}>Nästa</button>
+                </div>
+              </>
             )}
           </section>
         )}
 
-        {/* Step 8 — Holdings */}
+        {/* Step 8 — Adjust plan */}
         {step === 8 && connectData && (
-          <section key={step} className="surface step-animate stack">
-            <div>
-              <h2>Dina innehav</h2>
-              <p className="muted">Här är en förenklad analys utifrån dina konton.</p>
-            </div>
-            <div className="holdings">
-              {connectData.holdings.map((h) => (
-                <article key={String(h.id)} className="holding">
-                  <h3>{String(h.name)}</h3>
-                  <p className="muted small">{String(h.notes || '')}</p>
-                  <p className="small">
-                    Värde: {Number(h.value_sek).toLocaleString('sv-SE')} kr · Avgift: {String(h.ongoing_fee_pct)} % ·
-                    Domicil: {String(h.domicile)} · Konto: {String(h.vehicle)}
-                  </p>
-                </article>
-              ))}
-            </div>
-            <h3 className="muted" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.95rem', fontWeight: 600 }}>
-              Viktigt att veta
-            </h3>
-            <ul className="issues">
-              {((connectData.analysis as { issues?: { title: string; body: string }[] }).issues || []).map((i) => (
-                <li key={i.title}>
-                  <strong>{i.title}</strong>
-                  <div className="muted small" style={{ marginTop: '0.35rem' }}>
-                    {i.body}
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <div className="step-nav">
-              <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
-              <button type="button" className="btn-primary" onClick={() => setStep(9)}>Nästa</button>
-            </div>
-          </section>
-        )}
-
-        {/* Step 9 — Adjust plan */}
-        {step === 9 && connectData && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Justera plan</h2>
@@ -1305,9 +1233,9 @@ export function Onboarding() {
           </section>
         )}
 
-        {/* Step 10 — Done + AI assessment */}
-        {step === 10 && agentLoading && (
-          <section key="step10-loading" className="surface step-animate">
+        {/* Step 9 — Done + AI assessment */}
+        {step === 9 && agentLoading && (
+          <section key="step9-loading" className="surface step-animate">
             <div className="agent-loading-page">
               <div className="agent-loading-page__spinner" />
               <p className="agent-loading-page__label">Analyserar din portfölj</p>
@@ -1316,8 +1244,8 @@ export function Onboarding() {
           </section>
         )}
 
-        {step === 10 && !agentLoading && (
-          <section key="step10-result" className="surface step-animate stack">
+        {step === 9 && !agentLoading && (
+          <section key="step9-result" className="surface step-animate stack">
             <HeroImage className="hero-image--compact" src={images.forestLight} alt={imageAlt.forestLight} />
             <div>
               <h2>Din portföljanalys</h2>

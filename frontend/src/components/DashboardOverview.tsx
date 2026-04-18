@@ -1,6 +1,7 @@
 import { HeroImage } from './HeroImage'
 import { OverviewReengageBanner } from './OverviewReengageBanner'
 import { SavingsGoalPanel } from './SavingsGoalPanel'
+import { AdvisorChat } from './AdvisorChat'
 import { imageAlt, images } from '../content/images'
 import type { Overview } from '../types/dashboard'
 
@@ -344,6 +345,7 @@ export function DashboardOverview({
         </aside>
       </div>
       <OverviewReengageBanner />
+      <AdvisorChat />
     </div>
   )
 }
