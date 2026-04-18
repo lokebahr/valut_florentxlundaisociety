@@ -2490,3 +2490,113 @@ ul.plain li {
 
 .goal-eta__label { flex: 1; min-width: 8rem; }
 .goal-eta__remaining { margin-left: auto; }
+
+/* ── Behavioural scenario steps ──────────────────────────────────────────── */
+.scenario-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.scenario-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 0.95rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  font-family: var(--font-sans);
+  line-height: 1.4;
+}
+
+.scenario-option:hover {
+  border-color: var(--accent);
+  background: rgba(42, 77, 66, 0.04);
+}
+
+.scenario-option--selected {
+  border-color: var(--accent);
+  background: rgba(42, 77, 66, 0.08);
+  box-shadow: 0 0 0 2px rgba(42, 77, 66, 0.18);
+  font-weight: 500;
+}
+
+/* ── Behavioural profile match ───────────────────────────────────────────── */
+.profile-match {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.profile-match__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+
+.profile-match__label {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.profile-match__value {
+  font-weight: 600;
+}
+
+.profile-match__suggestion {
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.profile-match__match {
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+/* Scenario grid — 2 columns of cards */
+.scenario-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+@media (max-width: 680px) {
+  .scenario-grid { grid-template-columns: 1fr; }
+}
+.scenario-card {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.scenario-card__title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin: 0 0 0.2rem;
+  color: var(--text);
+}
+.scenario-card__desc {
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+  margin: 0;
+  line-height: 1.45;
+}
