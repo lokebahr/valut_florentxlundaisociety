@@ -425,22 +425,26 @@ function ScenarioChart({ points, endY, endLabel, lineColor, chartId }: {
   )
 }
 
-function ProfileCard({ profile, horizon, purpose }: { profile: ProfileData; horizon: number; purpose: string }) {
+function ProfileCard({ profile, horizon, purpose, minimal }: { profile: ProfileData; horizon: number; purpose: string; minimal?: boolean }) {
   const purposeLabel = SAVINGS_PURPOSES.find((p) => p.value === purpose)?.label ?? purpose
   return (
     <div className="profile-preview">
       <p className="profile-preview__label">Din investeringsprofil</p>
       <p className="profile-preview__name">{profile.name}</p>
-      <p className="profile-preview__desc">{profile.desc}</p>
+      {!minimal && <p className="profile-preview__desc">{profile.desc}</p>}
       <div className="profile-preview__metrics">
-        <div className="profile-preview__metric">
-          <div className="profile-preview__metric-label">Aktieandel</div>
-          <div className="profile-preview__metric-value">{profile.equityPct}%</div>
-        </div>
-        <div className="profile-preview__metric">
-          <div className="profile-preview__metric-label">Räntor / Stabila</div>
-          <div className="profile-preview__metric-value">{100 - profile.equityPct}%</div>
-        </div>
+        {!minimal && (
+          <>
+            <div className="profile-preview__metric">
+              <div className="profile-preview__metric-label">Aktieandel</div>
+              <div className="profile-preview__metric-value">{profile.equityPct}%</div>
+            </div>
+            <div className="profile-preview__metric">
+              <div className="profile-preview__metric-label">Räntor / Stabila</div>
+              <div className="profile-preview__metric-value">{100 - profile.equityPct}%</div>
+            </div>
+          </>
+        )}
         <div className="profile-preview__metric">
           <div className="profile-preview__metric-label">Sparhorisont</div>
           <div className="profile-preview__metric-value">{horizon} år</div>
@@ -495,6 +499,7 @@ export function Onboarding() {
   const [tinkDebug, setTinkDebug] = useState<unknown>(null)
   const [scenarioAnswers, setScenarioAnswers] = useState<Partial<Record<ScenarioKey, number>>>({})
   const [enriching, setEnriching] = useState(false)
+  const [scenarioSubStep, setScenarioSubStep] = useState(0)
 
   type AgentIssue = {
     holding_name?: string
@@ -652,6 +657,27 @@ export function Onboarding() {
     setStep((s) => Math.max(0, s - 1))
   }
 
+  function nextScenario() {
+    const sc = SCENARIO_DATA[scenarioSubStep]
+    if (scenarioAnswers[sc.key] === undefined) {
+      touch(sc.touchKey)
+      return
+    }
+    if (scenarioSubStep < SCENARIO_DATA.length - 1) {
+      setScenarioSubStep((s) => s + 1)
+    } else {
+      void next()
+    }
+  }
+
+  function backScenario() {
+    if (scenarioSubStep > 0) {
+      setScenarioSubStep((s) => s - 1)
+    } else {
+      back()
+    }
+  }
+
   async function next() {
     const missing = requiredForStep(step).filter((field) => {
       if (field === 'scenario_bull') return scenarioAnswers.bull === undefined
@@ -791,59 +817,56 @@ export function Onboarding() {
           </section>
         )}
 
-        {/* Step 2 — All behavioural scenarios */}
-        {step === 2 && (
-          <section key={step} className="surface step-animate stack">
-            <div>
-              <h2>Hur reagerar du i olika marknadslägen?</h2>
-              <p className="muted">
-                Svara på hur du känner i varje scenario — det hjälper oss förstå din verkliga risktolerans.
-              </p>
-            </div>
-            <div className="scenario-grid">
-              {SCENARIO_DATA.map((sc) => {
-                const answerKey = sc.key
-                return (
-                  <div key={sc.key} className="scenario-card">
-                    <div>
-                      <p className="scenario-card__title">{sc.title}</p>
-                      <p className="scenario-card__desc">{sc.desc}</p>
-                    </div>
-                    <ScenarioChart
-                      points={sc.points}
-                      endY={sc.endY}
-                      endLabel={sc.endLabel}
-                      lineColor={sc.lineColor}
-                      chartId={sc.key}
-                    />
-                    <div className="stack stack--tight">
-                      <p className="field-label">{sc.question}</p>
-                      <div className="scenario-options">
-                        {sc.options.map((opt) => (
-                          <button
-                            key={opt.score}
-                            type="button"
-                            className={`scenario-option${scenarioAnswers[answerKey] === opt.score ? ' scenario-option--selected' : ''}`}
-                            onClick={() => setScenarioAnswers((prev) => ({ ...prev, [answerKey]: opt.score }))}
-                          >
-                            {opt.text}
-                          </button>
-                        ))}
-                      </div>
-                      {touched.has(sc.touchKey) && scenarioAnswers[answerKey] === undefined && (
-                        <span className="field-error">Välj ett alternativ</span>
-                      )}
-                    </div>
+        {/* Step 2 — Behavioural scenarios (one at a time) */}
+        {step === 2 && (() => {
+          const sc = SCENARIO_DATA[scenarioSubStep] as (typeof SCENARIO_DATA)[0]
+          const answerKey = sc.key
+          const isLast = scenarioSubStep === SCENARIO_DATA.length - 1
+          return (
+            <section key={`step2-${scenarioSubStep}`} className="surface step-animate stack">
+              <div>
+                <h2>{sc.title}</h2>
+                <p className="muted">
+                  Scenario {scenarioSubStep + 1} av {SCENARIO_DATA.length} — svara på hur du känner i det här läget.
+                </p>
+              </div>
+              <div className="scenario-card">
+                <p className="scenario-card__desc">{sc.desc}</p>
+                <ScenarioChart
+                  points={sc.points}
+                  endY={sc.endY}
+                  endLabel={sc.endLabel}
+                  lineColor={sc.lineColor}
+                  chartId={sc.key}
+                />
+                <div className="stack stack--tight">
+                  <p className="field-label">{sc.question}</p>
+                  <div className="scenario-options">
+                    {sc.options.map((opt) => (
+                      <button
+                        key={opt.score}
+                        type="button"
+                        className={`scenario-option${scenarioAnswers[answerKey] === opt.score ? ' scenario-option--selected' : ''}`}
+                        onClick={() => setScenarioAnswers((prev) => ({ ...prev, [answerKey]: opt.score }))}
+                      >
+                        {opt.text}
+                      </button>
+                    ))}
                   </div>
-                )
-              })}
-            </div>
-            <div className="step-nav">
-              <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
-              <button type="button" className="btn-primary" onClick={next}>Nästa</button>
-            </div>
-          </section>
-        )}
+                  {touched.has(sc.touchKey) && scenarioAnswers[answerKey] === undefined && (
+                    <span className="field-error">Välj ett alternativ</span>
+                  )}
+                </div>
+              </div>
+              <div className="step-nav">
+                <button type="button" className="btn-ghost" onClick={backScenario}>Tillbaka</button>
+                <button type="button" className="btn-primary" onClick={nextScenario}>
+                  {isLast ? 'Se resultat' : 'Nästa'}
+                </button>
+              </div>
+            </section>
+          )
+        })()}
 
         {/* Step 3 — Behavioural profile result */}
         {step === 3 && (
@@ -985,7 +1008,6 @@ export function Onboarding() {
               )}
               <span className="field-hint">Partner, barn eller andra du försörjer ekonomiskt</span>
             </label>
-            <ProfileCard profile={baseProfile} horizon={timeHorizonYears} purpose={savingsPurpose} />
             <div className="step-nav">
               <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
               <button type="button" className="btn-primary" onClick={next}>Nästa</button>
@@ -1207,8 +1229,6 @@ export function Onboarding() {
               <p className="muted">Din nuvarande profil visas nedan. Justera risknivån om din situation har ändrats.</p>
             </div>
 
-            <ProfileCard profile={baseProfile} horizon={timeHorizonYears} purpose={savingsPurpose} />
-
             <div className="stack stack--tight">
               <p className="field-label">Justera risk (valfritt)</p>
               <div className="risk-selector">
@@ -1226,9 +1246,6 @@ export function Onboarding() {
                 ))}
               </div>
               <PortfolioChart riskLevel={adjustedRisk ?? riskTolerance} />
-              {adjustedRisk !== null && adjustedRisk !== riskTolerance && (
-                <ProfileCard profile={adjustedProfile} horizon={timeHorizonYears} purpose={savingsPurpose} />
-              )}
             </div>
 
             <label>
@@ -1272,6 +1289,31 @@ export function Onboarding() {
             <div>
               <h2>Din portföljanalys</h2>
               <p className="muted">AI-rådgivaren har analyserat din portfölj och dina svar.</p>
+            </div>
+
+            <div className="profile-preview">
+              <p className="profile-preview__label">Din investeringsprofil</p>
+              <p className="profile-preview__name">
+                {RISK_OPTIONS.find((o) => o.level === (adjustedRisk ?? riskTolerance))?.name}
+              </p>
+              <div className="profile-preview__metrics" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                <div className="profile-preview__metric">
+                  <div className="profile-preview__metric-label">Risk</div>
+                  <div className="profile-preview__metric-value">
+                    {RISK_OPTIONS.find((o) => o.level === (adjustedRisk ?? riskTolerance))?.name}
+                  </div>
+                </div>
+                <div className="profile-preview__metric">
+                  <div className="profile-preview__metric-label">Horisont</div>
+                  <div className="profile-preview__metric-value">{timeHorizonYears} år</div>
+                </div>
+                <div className="profile-preview__metric">
+                  <div className="profile-preview__metric-label">Mål</div>
+                  <div className="profile-preview__metric-value">
+                    {SAVINGS_PURPOSES.find((p) => p.value === savingsPurpose)?.label ?? savingsPurpose}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {agentLoading && (
