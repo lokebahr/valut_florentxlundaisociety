@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
 import { Shell } from '../components/Shell'
-import imgVisual from '../../pictures/bild4.jpg'
 
 type TinkLinkInfo = { mode: 'mock' | 'tink'; url?: string }
 
@@ -42,9 +41,7 @@ export function Register() {
     <Shell variant="minimal">
       <div className="page page--auth">
         <div className="auth-grid">
-          <div className="auth-visual">
-            <img src={imgVisual} alt="" />
-          </div>
+          <div className="auth-visual"></div>
           <div className="auth-panel">
             <div className="stack--tight">
               <h1>Kom igång gratis</h1>

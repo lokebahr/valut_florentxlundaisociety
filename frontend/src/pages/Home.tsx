@@ -5,11 +5,6 @@ import { api } from '../api'
 import { useAuth } from '../auth'
 
 type TinkLinkInfo = { mode: 'mock' | 'tink'; url?: string }
-import imgHero from '../../pictures/bidl3.jpg'
-import imgSkate from '../../pictures/bild1.jpg'
-import imgCelebrate from '../../pictures/bild2.jpg'
-import imgFamily from '../../pictures/bild4.jpg'
-import imgVan from '../../pictures/bild5.jpg'
 
 function useReveal(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null)
@@ -106,9 +101,7 @@ export function Home() {
       </header>
 
       <section className="lp-hero">
-        <div className="lp-hero__bg" aria-hidden>
-          <img src={imgHero} alt="" />
-        </div>
+        <div className="lp-hero__bg" aria-hidden></div>
         <div className="lp-hero__inner">
           <div className="lp-eyebrow">
             <span className="lp-eyebrow__dot" />
@@ -255,9 +248,7 @@ function VanSection({ onCta, busy }: { onCta: () => void; busy: boolean }) {
   const { ref, visible } = useReveal(0.05)
   return (
     <div ref={ref} className={`lp-split lp-reveal${visible ? ' lp-reveal--in' : ''}`}>
-      <div className="lp-split__img">
-        <img src={imgVan} alt="Öppet fönster mot landskap med pool" />
-      </div>
+      <div className="lp-split__img"></div>
       <div className="lp-split__content">
         <div className="lp-eyebrow">Frihet att välja</div>
         <h2 className="lp-split__h2">
@@ -278,9 +269,9 @@ function VanSection({ onCta, busy }: { onCta: () => void; busy: boolean }) {
 function LifestyleSection() {
   const { ref, visible } = useReveal()
   const items = [
-    { src: imgSkate, alt: 'Person med skateboard', label: 'Dina intressen' },
-    { src: imgCelebrate, alt: 'Vänner skålar', label: 'Dina upplevelser' },
-    { src: imgFamily, alt: 'Familj med barn', label: 'Din familj' },
+    { alt: 'Person med skateboard', label: 'Dina intressen' },
+    { alt: 'Vänner skålar', label: 'Dina upplevelser' },
+    { alt: 'Familj med barn', label: 'Din familj' },
   ]
   return (
     <div ref={ref} className={`lp-section lp-section--cream lp-reveal${visible ? ' lp-reveal--in' : ''}`}>
@@ -294,9 +285,7 @@ function LifestyleSection() {
               key={item.label}
               style={{ '--lp-delay': `${i * 0.12}s` } as CSSProperties}
             >
-              <div className="lp-lifestyle__img">
-                <img src={item.src} alt={item.alt} />
-              </div>
+              <div className="lp-lifestyle__img"></div>
               <span className="lp-lifestyle__label">{item.label}</span>
             </div>
           ))}

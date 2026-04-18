@@ -31,7 +31,7 @@ def _user_public_dict(user: User) -> dict:
 @bp.post("/mock")
 def mock_sign_in():
     """Demo login for local development when Tink credentials are not configured."""
-    if Config.TINK_CLIENT_ID and Config.TINK_CLIENT_SECRET:
+    if not Config.TINK_USE_MOCK and Config.TINK_CLIENT_ID and Config.TINK_CLIENT_SECRET:
         return jsonify({"error": "Mock-inloggning är inaktiverad i produktionsläge."}), 403
 
     demo_user, _ = User.get_or_create(

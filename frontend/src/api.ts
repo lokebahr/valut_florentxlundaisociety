@@ -25,6 +25,7 @@ export async function api<T>(
   const isJson = contentType.includes('application/json')
   const data = text && isJson ? JSON.parse(text) : {}
   if (!res.ok) {
+    if (res.status === 401) localStorage.removeItem('valut_token')
     const d = data as { error?: string; detail?: string }
     const fallback = text && !isJson ? `${res.status} ${res.statusText}` : res.statusText
     const msg = [d.error || fallback, d.detail].filter(Boolean).join(' — ')
