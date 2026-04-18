@@ -754,6 +754,14 @@ ul.plain li {
   text-decoration: none;
   letter-spacing: -0.02em;
   transition: color 0.3s;
+  display: flex;
+  align-items: center;
+}
+
+.lp-nav__logo-img {
+  height: 42px;
+  width: auto;
+  display: block;
 }
 
 .lp-nav--solid .lp-nav__logo {

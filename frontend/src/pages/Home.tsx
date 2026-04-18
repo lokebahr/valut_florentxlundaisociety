@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
 import imgHero from '../../pictures/bidl3.jpg'
+import logoSvg from '../../pictures/logo.svg'
 import imgSkate from '../../pictures/bild1.jpg'
 import imgCelebrate from '../../pictures/bild2.jpg'
 import imgFamily from '../../pictures/bild4.jpg'
@@ -92,7 +93,9 @@ export function Home() {
   return (
     <div className="lp">
       <header className={`lp-nav${scrolled ? ' lp-nav--solid' : ''}`}>
-        <Link to="/" className="lp-nav__logo">Valut</Link>
+        <Link to="/" className="lp-nav__logo">
+          <img src={logoSvg} alt="Valut" className="lp-nav__logo-img" />
+        </Link>
         <nav className="lp-nav__actions">
           <button
             type="button"
