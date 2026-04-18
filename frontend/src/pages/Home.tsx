@@ -7,6 +7,7 @@ import imgHero from '../../pictures/bidl3.jpg'
 import imgSkate from '../../pictures/bild1.jpg'
 import imgCelebrate from '../../pictures/bild2.jpg'
 import imgFamily from '../../pictures/bild4.jpg'
+import imgVan from '../../pictures/bild5.jpg'
 
 function useReveal(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null)
@@ -83,7 +84,10 @@ export function Home() {
           <img src={imgHero} alt="" />
         </div>
         <div className="lp-hero__inner">
-          <div className="lp-eyebrow">Investeringsrådgivning</div>
+          <div className="lp-eyebrow">
+            <span className="lp-eyebrow__dot" />
+            Investeringsrådgivning
+          </div>
           <h1 className="lp-hero__h1">
             Investeringar som<br />faktiskt passar dig
           </h1>
@@ -101,6 +105,7 @@ export function Home() {
 
       <FeaturesSection />
       <HowItWorksSection />
+      <VanSection />
       <LifestyleSection />
       <StatsSection />
       <TestimonialsSection />
@@ -125,16 +130,31 @@ function FeaturesSection() {
   const features = [
     {
       n: '01',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" />
+        </svg>
+      ),
       title: 'Personlig analys',
       body: 'Vi kopplar till din bank och analyserar dina nuvarande innehav mot dina mål och risktolerans.',
     },
     {
       n: '02',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+        </svg>
+      ),
       title: 'Konkreta råd',
       body: 'Inga vaga råd. Du får tydliga rekommendationer: vad du ska behålla, sälja eller köpa.',
     },
     {
       n: '03',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 20V10M12 20V4M6 20v-6" />
+        </svg>
+      ),
       title: 'Löpande uppföljning',
       body: 'Din ekonomi förändras. Vi håller koll och meddelar dig när din portfölj behöver justeras.',
     },
@@ -151,7 +171,7 @@ function FeaturesSection() {
               key={f.n}
               style={{ '--lp-delay': `${i * 0.11}s` } as CSSProperties}
             >
-              <div className="lp-card__num">{f.n}</div>
+              <div className="lp-card__icon">{f.icon}</div>
               <h3 className="lp-card__title">{f.title}</h3>
               <p className="lp-card__body">{f.body}</p>
             </div>
@@ -198,6 +218,28 @@ function HowItWorksSection() {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function VanSection() {
+  const { ref, visible } = useReveal(0.05)
+  return (
+    <div ref={ref} className={`lp-split lp-reveal${visible ? ' lp-reveal--in' : ''}`}>
+      <div className="lp-split__img">
+        <img src={imgVan} alt="Öppet fönster mot landskap med pool" />
+      </div>
+      <div className="lp-split__content">
+        <div className="lp-eyebrow">Frihet att välja</div>
+        <h2 className="lp-split__h2">
+          Öppna dörren<br />mot livet du<br />vill leva
+        </h2>
+        <p className="lp-split__body">
+          Bakom varje sparad krona döljer sig en möjlighet — en resa, ett hem, en känsla av frihet.
+          Valut hjälper dig att nå dit snabbare.
+        </p>
+        <Link to="/register" className="lp-pill lp-pill--white">Kom igång gratis</Link>
       </div>
     </div>
   )
@@ -293,7 +335,8 @@ function TestimonialsSection() {
               key={i}
               style={{ '--lp-delay': `${i * 0.1}s` } as CSSProperties}
             >
-              <p className="lp-testimonial__quote">"{q.quote}"</p>
+              <div className="lp-testimonial__stars" aria-label="5 stjärnor">{'★★★★★'}</div>
+              <p className="lp-testimonial__quote">{q.quote}</p>
               <div className="lp-testimonial__author">
                 <strong>{q.name}</strong>
                 <span>{q.role}</span>
