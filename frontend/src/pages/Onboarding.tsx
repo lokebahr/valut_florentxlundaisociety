@@ -7,13 +7,13 @@ import { StepProgress } from '../components/StepProgress'
 import { imageAlt, images } from '../content/images'
 
 const STEP_LABELS = [
+  'Bankkoppling',
   'Riskvilja',
   'Scenarion',
   'Din profil',
   'Sparhorisont',
   'Sparmål',
   'Din ekonomi',
-  'Bankkoppling',
   'Buffert',
   'Innehav',
   'Justera plan',
@@ -586,7 +586,7 @@ export function Onboarding() {
             accounts: snap.accounts,
           },
         )
-        setStep(7)
+        setStep(1)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Kunde inte läsa bankdata.')
       }
@@ -641,9 +641,9 @@ export function Onboarding() {
   }
 
   function requiredForStep(s: number): string[] {
-    if (s === 1) return ['scenario_bull', 'scenario_bear', 'scenario_patience', 'scenario_recovery', 'scenario_volatile', 'scenario_bubble']
-    if (s === 4) return ['dependentsCount']
-    if (s === 5) return ['age', 'salaryMonthlySek', 'disposableIncomeMonthlySek']
+    if (s === 2) return ['scenario_bull', 'scenario_bear', 'scenario_patience', 'scenario_recovery', 'scenario_volatile', 'scenario_bubble']
+    if (s === 5) return ['dependentsCount']
+    if (s === 6) return ['age', 'salaryMonthlySek', 'disposableIncomeMonthlySek']
     return []
   }
 
@@ -683,7 +683,7 @@ export function Onboarding() {
     try {
       const res = await api<ConnectPayload>('/api/tink/connect-mock', { method: 'POST' })
       setConnectData(res)
-      setStep(7)
+      setStep(1)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Anslutningen misslyckades.')
     }
@@ -757,8 +757,8 @@ export function Onboarding() {
           </p>
         )}
 
-        {/* Step 0 — Risk */}
-        {step === 0 && (
+        {/* Step 1 — Risk */}
+        {step === 1 && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Hur mycket risk är du bekväm med?</h2>
@@ -788,8 +788,8 @@ export function Onboarding() {
           </section>
         )}
 
-        {/* Step 1 — All behavioural scenarios */}
-        {step === 1 && (
+        {/* Step 2 — All behavioural scenarios */}
+        {step === 2 && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Hur reagerar du i olika marknadslägen?</h2>
@@ -842,8 +842,8 @@ export function Onboarding() {
           </section>
         )}
 
-        {/* Step 2 — Behavioural profile result */}
-        {step === 2 && (
+        {/* Step 3 — Behavioural profile result */}
+        {step === 3 && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Din beteendeprofil</h2>
@@ -915,8 +915,8 @@ export function Onboarding() {
           </section>
         )}
 
-        {/* Step 3 — Horizon */}
-        {step === 3 && (
+        {/* Step 4 — Horizon */}
+        {step === 4 && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Hur länge vill du spara?</h2>
@@ -946,8 +946,8 @@ export function Onboarding() {
           </section>
         )}
 
-        {/* Step 4 — Savings purpose */}
-        {step === 4 && (
+        {/* Step 5 — Savings purpose */}
+        {step === 5 && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Vad sparar du till?</h2>
@@ -990,8 +990,8 @@ export function Onboarding() {
           </section>
         )}
 
-        {/* Step 5 — Finances */}
-        {step === 5 && (
+        {/* Step 6 — Finances */}
+        {step === 6 && (
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Din ekonomi</h2>
@@ -1065,14 +1065,14 @@ export function Onboarding() {
           </section>
         )}
 
-        {/* Step 6 — Bank connection */}
-        {step === 6 && (
+        {/* Step 0 — Bank connection */}
+        {step === 0 && (
           <section key={step} className="surface step-animate stack">
             <div>
-              <h2>Bankkoppling</h2>
+              <h2>Anslut din bank</h2>
               <p className="muted">
-                Vi läser konton via öppen bankkoppling. Med riktiga nycklar kan du testa Tinks testmiljö med demobank.
-                Lokalt kan du använda demonstrationsdata som liknar svenska konton och fonder.
+                Vi läser konton via öppen bankkoppling för att ge dig en personlig portföljanalys. Ingen data lagras
+                utan ditt godkännande.
               </p>
             </div>
             {tinkInfo?.mode === 'mock' && (
@@ -1098,7 +1098,6 @@ export function Onboarding() {
                 )}
               </div>
             )}
-            <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
           </section>
         )}
 
