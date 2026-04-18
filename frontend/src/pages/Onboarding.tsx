@@ -232,24 +232,6 @@ const HORIZON_OPTIONS = [
   { years: 40, label: '40 år', category: 'Generationslång', hint: 'Arv eller generationssparande, max tillväxt' },
 ]
 
-function targetEquity(risk: number, horizon: number): number {
-  const base = 0.35 + (risk - 1) * 0.1
-  const adj = horizon < 3 ? base - 0.15 : horizon > 15 ? base + 0.1 : base
-  return Math.max(0.15, Math.min(0.95, adj))
-}
-
-type ProfileData = { name: string; desc: string; equityPct: number }
-
-function computeProfile(risk: number, horizon: number): ProfileData {
-  const equityPct = Math.round(targetEquity(risk, horizon) * 100)
-  if (risk <= 1.5) return { name: 'Kapitalbevarare', desc: 'Fokus på kapitalskydd med minimal volatilitet.', equityPct }
-  if (risk <= 2.5) return { name: 'Defensiv', desc: 'Stabil tillväxt med begränsad kursrisk.', equityPct }
-  if (risk <= 3.5)
-    return { name: 'Balanserad', desc: 'Klassisk mix av aktier och räntor för måttlig avkastning.', equityPct }
-  if (risk <= 4.5) return { name: 'Tillväxt', desc: 'Tydlig aktievikt för god avkastning över tid.', equityPct }
-  return { name: 'Offensiv Tillväxt', desc: 'Maximal aktieexponering för högsta förväntade avkastning.', equityPct }
-}
-
 // Portfolio chart: −50% to +200%. y(pct) = 235 − (pct + 50) × 0.88
 const CHART_GRID = [
   { y: 15,  label: '+200%', isStart: false },
@@ -467,39 +449,6 @@ function ScenarioChart({ points, endY, endLabel, lineColor, chartId }: {
   )
 }
 
-function ProfileCard({ profile, horizon, purpose, minimal }: { profile: ProfileData; horizon: number; purpose: string; minimal?: boolean }) {
-  const purposeLabel = SAVINGS_PURPOSES.find((p) => p.value === purpose)?.label ?? purpose
-  return (
-    <div className="profile-preview">
-      <p className="profile-preview__label">Din investeringsprofil</p>
-      <p className="profile-preview__name">{profile.name}</p>
-      {!minimal && <p className="profile-preview__desc">{profile.desc}</p>}
-      <div className="profile-preview__metrics">
-        {!minimal && (
-          <>
-            <div className="profile-preview__metric">
-              <div className="profile-preview__metric-label">Aktieandel</div>
-              <div className="profile-preview__metric-value">{profile.equityPct}%</div>
-            </div>
-            <div className="profile-preview__metric">
-              <div className="profile-preview__metric-label">Räntor / Stabila</div>
-              <div className="profile-preview__metric-value">{100 - profile.equityPct}%</div>
-            </div>
-          </>
-        )}
-        <div className="profile-preview__metric">
-          <div className="profile-preview__metric-label">Sparhorisont</div>
-          <div className="profile-preview__metric-value">{horizon} år</div>
-        </div>
-        <div className="profile-preview__metric">
-          <div className="profile-preview__metric-label">Mål</div>
-          <div className="profile-preview__metric-value">{purposeLabel}</div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 type TinkLinkInfo = { mode: 'mock' | 'tink'; url?: string; message?: string; redirect_uri?: string }
 
 type ConnectPayload = {
@@ -560,6 +509,7 @@ export function Onboarding() {
   }
   const [agentResult, setAgentResult] = useState<AgentResult | null>(null)
   const [agentLoading, setAgentLoading] = useState(false)
+  const [finishing, setFinishing] = useState(false)
   const agentPreloadRef = useRef<Promise<AgentResult> | null>(null)
 
   useEffect(() => { window.scrollTo(0, 0) }, [step])
@@ -648,12 +598,6 @@ export function Onboarding() {
       .then(setTinkInfo)
       .catch((e) => setError(e instanceof Error ? e.message : 'Kunde inte hämta Tink-länk.'))
   }, [])
-
-  const baseProfile = useMemo(() => computeProfile(riskTolerance, timeHorizonYears), [riskTolerance, timeHorizonYears])
-  const adjustedProfile = useMemo(
-    () => computeProfile(adjustedRisk ?? riskTolerance, timeHorizonYears),
-    [adjustedRisk, riskTolerance, timeHorizonYears],
-  )
 
   const behavioralRisk = useMemo(() => {
     const answers = ([scenarioAnswers.bull, scenarioAnswers.bear, scenarioAnswers.patience, scenarioAnswers.recovery, scenarioAnswers.volatile, scenarioAnswers.bubble] as (number | undefined)[])
@@ -806,8 +750,7 @@ export function Onboarding() {
     }
   }
 
-  async function finishOnboarding(e: FormEvent) {
-    e.preventDefault()
+  async function completeOnboarding() {
     setError(null)
     setFinishing(true)
     try {
@@ -817,6 +760,11 @@ export function Onboarding() {
       setError(err instanceof Error ? err.message : 'Kunde inte slutföra.')
       setFinishing(false)
     }
+  }
+
+  function finishOnboarding(e: FormEvent) {
+    e.preventDefault()
+    void completeOnboarding()
   }
 
 
@@ -834,9 +782,20 @@ export function Onboarding() {
     <Shell>
       <div className="page page--wide">
         <div className="stack" style={{ marginBottom: '1.5rem' }}>
-          <Link to="/dashboard" className="muted small">
-            Till översikt
-          </Link>
+          {step === 10 ? (
+            <button
+              type="button"
+              className="btn-link btn-link--muted"
+              disabled={finishing || agentLoading}
+              onClick={() => void completeOnboarding()}
+            >
+              Till översikt
+            </button>
+          ) : (
+            <Link to="/dashboard" className="muted small">
+              Till översikt
+            </Link>
+          )}
           <StepProgress current={step} total={TOTAL_STEPS} label={STEP_LABELS[step] ?? ''} />
         </div>
 
@@ -1440,8 +1399,8 @@ export function Onboarding() {
             )}
 
             <form onSubmit={finishOnboarding}>
-              <button type="submit" className="btn-primary">
-                Öppna översikt
+              <button type="submit" className="btn-primary" disabled={finishing}>
+                {finishing ? 'Sparar…' : 'Öppna översikt'}
               </button>
             </form>
           </section>

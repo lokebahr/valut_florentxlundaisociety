@@ -59,6 +59,8 @@ def refresh_snapshot_from_holdings_service(user: User) -> None:
 
     accounts = fetch_tink_shaped_accounts(user_id=user.id)
     holdings = normalize_holdings(accounts, use_mock_enrichment=False)
+    if (Config.FUND_PARSER_URL or "").strip():
+        holdings = enrich_holdings(holdings)
     liquid = sum_liquid_sek_from_accounts(accounts)
     profile = _profile_dict(user)
     buffer = analyze_buffer(profile.get("disposable_income_monthly_sek"), liquid)
@@ -124,6 +126,8 @@ def sync_portfolio_for_user(
     if use_holdings_service:
         accounts = fetch_tink_shaped_accounts(user_id=user.id)
         holdings = normalize_holdings(accounts, use_mock_enrichment=False)
+        if (Config.FUND_PARSER_URL or "").strip():
+            holdings = enrich_holdings(holdings)
         liquid = sum_liquid_sek_from_accounts(accounts)
         profile = _profile_dict(user)
         buffer = analyze_buffer(profile.get("disposable_income_monthly_sek"), liquid)
@@ -148,6 +152,8 @@ def sync_portfolio_for_user(
     else:
         accounts = client.fetch_accounts(access_token)
         holdings = normalize_holdings(accounts, use_mock_enrichment=False)
+        if (Config.FUND_PARSER_URL or "").strip():
+            holdings = enrich_holdings(holdings)
         liquid = sum_liquid_sek_from_accounts(accounts)
         profile = _profile_dict(user)
         buffer = analyze_buffer(profile.get("disposable_income_monthly_sek"), liquid)
@@ -241,7 +247,9 @@ def connect_mock():
             accounts = fetch_tink_shaped_accounts(user_id=user.id)
         except HoldingsServiceError as exc:
             return jsonify({"error": "Holdings-tjänsten svarade inte.", "detail": str(exc)}), 502
-        holdings = normalize_holdings(accounts, use_mock_enrichment=True)
+        holdings = normalize_holdings(accounts, use_mock_enrichment=False)
+        if (Config.FUND_PARSER_URL or "").strip():
+            holdings = enrich_holdings(holdings)
         liquid = sum_liquid_sek_from_accounts(accounts)
         profile = _profile_dict(user)
         buffer = analyze_buffer(profile.get("disposable_income_monthly_sek"), liquid)

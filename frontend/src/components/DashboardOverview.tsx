@@ -16,8 +16,11 @@ function weightedAvgFeePct(holdings: Record<string, unknown>[]): number {
   let w = 0
   for (const h of holdings) {
     const v = Number(h.value_sek) || 0
-    const f = Number(h.ongoing_fee_pct) || 0
     if (v <= 0) continue
+    const raw = h.ongoing_fee_pct
+    if (raw === null || raw === undefined) continue
+    const f = Number(raw)
+    if (!Number.isFinite(f)) continue
     t += v * f
     w += v
   }
@@ -121,13 +124,14 @@ function OverviewCelebration() {
 function fundCard(h: Record<string, unknown>, variant: 'current' | 'target', keySuffix: string) {
   const name = String(h.name ?? 'Fond')
   const v = Number(h.value_sek) || 0
-  const fee = Number(h.ongoing_fee_pct)
-  const feeStr = Number.isFinite(fee) ? `${fee} %` : '—'
+  const rawFee = h.ongoing_fee_pct
+  const feeNum = rawFee === null || rawFee === undefined ? NaN : Number(rawFee)
+  const feeLine = Number.isFinite(feeNum) ? `avgift ca ${formatFeePct(feeNum)}` : 'avgift okänd'
   return (
     <div key={`${name}-${variant}-${keySuffix}`} className={`overview-fund overview-fund--${variant}`}>
       <div className="overview-fund__name">{name}</div>
       <div className="overview-fund__meta muted small">
-        {v > 0 ? `${v.toLocaleString('sv-SE')} kr` : 'Målfond'} · avgift ca {feeStr}
+        {v > 0 ? `${v.toLocaleString('sv-SE')} kr` : 'Målfond'} · {feeLine}
       </div>
     </div>
   )

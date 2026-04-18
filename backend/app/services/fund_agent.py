@@ -26,7 +26,9 @@ REGLER:
 - Aktieandel avviker > 12 % från mål: riskavvikelse (Markowitz 1952)
 - Hemlandsbias > 40 %: diversifieringsproblem (Solnik 1974)
 
-Svara ENBART med detta JSON (inga extra nycklar, ingen text utanför):
+Svara ENBART med detta JSON (inga extra nycklar, ingen text utanför, inga ```-kodblock):
+Skriv EN kompakt JSON-rad (minimal whitespace, inga radbrytningar i objektet). Högst 8 issues.
+Schema:
 {"overall_assessment":"1-2 meningar","issues":[{"holding_name":"","severity":"high|medium|low","category":"cost|active_management|risk_alignment|diversification|tax|performance","problem":"kort titel","detail":"1 mening med konkret fondattribut + användarkontext","citation":"källa"}]}"""
 
 
@@ -122,22 +124,28 @@ def assess(profile: dict[str, Any], holdings: list[dict[str, Any]]) -> dict[str,
 
     messages: list[dict[str, Any]] = [{"role": "user", "content": user_context}]
 
-    for attempt in range(2):
+    for attempt in range(3):
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=1200,
+            max_tokens=8192,
             system=_SYSTEM,
             messages=messages,
         )
 
-        raw_text = ""
+        parts: list[str] = []
         for block in response.content:
-            if not hasattr(block, "text"):
-                continue
-            raw_text = block.text.strip()
-            break
+            t = getattr(block, "text", None)
+            if t:
+                parts.append(t)
+        raw_text = "".join(parts).strip()
 
-        print(f"[fund_agent] attempt={attempt} stop_reason={response.stop_reason} raw={raw_text[:300]!r}")
+        preview_len = 240
+        prev = raw_text[:preview_len].replace("\n", " ")
+        ell = " …" if len(raw_text) > preview_len else ""
+        print(
+            f"[fund_agent] attempt={attempt} stop_reason={response.stop_reason} "
+            f"chars={len(raw_text)} preview={prev!r}{ell}"
+        )
 
         if not raw_text:
             continue
@@ -160,9 +168,13 @@ def assess(profile: dict[str, Any], holdings: list[dict[str, Any]]) -> dict[str,
             print(f"[fund_agent] JSON parse error: {exc}")
 
         messages.append({"role": "assistant", "content": response.content})
-        messages.append({
-            "role": "user",
-            "content": "Svara endast med giltigt JSON (overall_assessment + issues).",
-        })
+        if response.stop_reason == "max_tokens":
+            nudge = (
+                "Ditt svar kapades. Svara med EN enda kompakt JSON-rad (inga ```), "
+                "högst 6 issues, korta strängar (problem/detail ~120 tecken vardera)."
+            )
+        else:
+            nudge = "Svara endast med giltigt JSON (overall_assessment + issues), kompakt utan kodblock."
+        messages.append({"role": "user", "content": nudge})
 
     return {"error": "Agent did not produce a result."}

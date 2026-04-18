@@ -63,10 +63,21 @@ def put_profile():
     # These can be intentionally cleared to null by the user
     explicitly_nullable = {"adjusted_risk_tolerance", "monthly_contribution_sek", "scenario_answers_json"}
     for key in fields:
-        if key in data:
-            val = data[key]
-            if val is not None or key in explicitly_nullable:
-                setattr(profile, key, val)
+        if key not in data:
+            continue
+        val = data[key]
+        if key == "onboarding_completed":
+            if isinstance(val, bool):
+                profile.onboarding_completed = val
+            elif isinstance(val, (int, float)):
+                profile.onboarding_completed = val != 0
+            elif isinstance(val, str):
+                profile.onboarding_completed = val.strip().lower() in ("1", "true", "yes", "on")
+            else:
+                profile.onboarding_completed = False
+            continue
+        if val is not None or key in explicitly_nullable:
+            setattr(profile, key, val)
     profile.updated_at = datetime.utcnow()
     profile.save()
     saved = _profile_to_dict(profile)

@@ -15,13 +15,20 @@ export function Login() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (token) {
-      navigate('/dashboard', { replace: true })
+    if (!token) {
+      api<TinkLinkInfo>('/api/tink/link')
+        .then(setTinkInfo)
+        .catch(() => setTinkInfo({ mode: 'mock' }))
       return
     }
-    api<TinkLinkInfo>('/api/tink/link')
-      .then(setTinkInfo)
-      .catch(() => setTinkInfo({ mode: 'mock' }))
+    ;(async () => {
+      try {
+        const me = await api<{ onboarding_completed: boolean }>('/api/auth/me')
+        navigate(me.onboarding_completed ? '/dashboard' : '/onboarding', { replace: true })
+      } catch {
+        navigate('/login', { replace: true })
+      }
+    })()
   }, [token, navigate])
 
   async function handleMockLogin() {

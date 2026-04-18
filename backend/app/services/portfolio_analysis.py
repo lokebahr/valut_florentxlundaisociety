@@ -69,18 +69,22 @@ def analyze_holdings(
     issues: list[dict[str, Any]] = []
     for h in holdings:
         name = h.get("name", "Fond")
-        fee = float(h.get("ongoing_fee_pct") or 0)
+        raw_fee = h.get("ongoing_fee_pct")
+        try:
+            fee = float(raw_fee) if raw_fee is not None else None
+        except (TypeError, ValueError):
+            fee = None
         dom = (h.get("domicile") or "").upper()
         excess = h.get("three_year_excess_vs_benchmark_pct")
         vehicle = (h.get("vehicle") or "").upper()
 
-        if fee > 0.6:
+        if fee is not None and fee > 0.6:
             issues.append(
                 {
                     "holding_id": h.get("id"),
                     "severity": "high",
                     "title": "Höga förvaltningsavgifter",
-                    "body": f"{name} har ca {fee:.2f}% i löpande avgift. Höga avgifter är ett robust predikat för lägre nettoavkastning (Berk & Green, 2004; French, 2008).",
+                    "body": f"{name} har ca {fee:.2f} % i löpande avgift. Höga avgifter är ett robust predikat för lägre nettoavkastning (Berk & Green, 2004; French, 2008).",
                     "citations": [
                         {"label": "Berk & Green (2004)", "detail": "Flöden till fonder och avkastning."},
                         {"label": "French (2008)", "detail": "Kostnaden för aktiv förvaltning."},
