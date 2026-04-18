@@ -1,3 +1,5 @@
+import imgBild7 from '../../pictures/bild7.jpg'
+
 /** Nordiska, lugna motiv — Unsplash (fri användning). */
 export const images = {
   heroLandscape:
@@ -6,8 +8,7 @@ export const images = {
     'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?auto=format&fit=crop&w=1600&q=82',
   forestLight:
     'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1800&q=82',
-  seaCalm:
-    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=2000&q=82',
+  seaCalm: imgBild7,
   deskMinimal:
     'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1600&q=82',
 } as const
