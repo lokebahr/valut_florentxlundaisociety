@@ -227,8 +227,7 @@ function TestimonialsSection() {
   const { ref, visible } = useReveal()
   const quotes = [
     {
-      quote:
-        'Jag visste inte att mina fonder överlappade varandra så mycket. Valut visade mig det på sekunder.',
+      quote: 'Jag visste inte att mina fonder överlappade varandra så mycket. Valut visade mig det på sekunder.',
       name: 'Anna K.',
       role: 'Lärare, 38 år',
     },
