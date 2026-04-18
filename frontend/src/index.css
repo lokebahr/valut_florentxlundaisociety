@@ -143,6 +143,7 @@ a:hover {
   flex: 1;
   width: 100%;
   min-height: 0;
+  padding-bottom: 5.5rem;
 }
 
 .shell-main--fill {
@@ -3018,11 +3019,11 @@ ul.plain li {
 }
 
 .dashboard-root--overview .overview-bento__cell {
-  border-radius: 14px;
-  border: 1px solid rgba(28, 36, 48, 0.09);
-  background: linear-gradient(165deg, #fff 0%, rgba(255, 252, 247, 0.94) 100%);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 8px 22px rgba(42, 77, 66, 0.06);
-  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(28, 36, 48, 0.08);
+  background: linear-gradient(165deg, #fff 0%, rgba(255, 252, 247, 0.96) 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 2px 8px rgba(42, 77, 66, 0.05), 0 10px 28px rgba(42, 77, 66, 0.08);
+  padding: 1.1rem 1.25rem;
   display: flex;
   flex-direction: column;
 }
@@ -3034,14 +3035,80 @@ ul.plain li {
 .dashboard-root--overview .overview-bento__cell--head {
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.15rem;
-  padding: 0.4rem 0.55rem;
-  background: rgba(255, 255, 255, 0.55);
+  gap: 0.65rem;
+  padding: 1.6rem 1.75rem;
+  background: linear-gradient(135deg, #1a3028 0%, #2a4d42 55%, #1e3d33 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 0 rgba(255, 255, 255, 0.06) inset, 0 14px 36px rgba(20, 44, 34, 0.22);
+}
+
+.dashboard-root--overview .overview-bento__eyebrow {
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin: 0;
+}
+
+.dashboard-root--overview .overview-bento__total {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin: 0;
+  color: #fff;
+}
+
+.dashboard-root--overview .overview-bento__total-unit {
+  font-size: 0.5em;
+  opacity: 0.65;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.dashboard-root--overview .overview-bento__head-stats {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-root--overview .overview-bento__head-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.dashboard-root--overview .overview-bento__head-stat-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.5;
+}
+
+.dashboard-root--overview .overview-bento__head-stat-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.dashboard-root--overview .overview-bento__head-stat-value--ok {
+  color: #7dd8a8;
+}
+
+.dashboard-root--overview .overview-bento__head-stat-value--warn {
+  color: #f5c06a;
 }
 
 .dashboard-root--overview .overview-bento__stamp {
-  margin: 0.1rem 0 0;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
+  opacity: 0.38;
+  margin: 0;
+  align-self: flex-end;
+  margin-left: auto;
 }
 
 .dashboard-root--overview .overview-reengage {
@@ -3205,20 +3272,26 @@ ul.plain li {
   padding: 1rem 1.1rem;
 }
 
+.dashboard-root--overview .overview-bento__cell--funds-block,
+.dashboard-root--overview .overview-bento__cell--goals,
+.dashboard-root--overview .overview-bento__cell--advice {
+  border-left: 3px solid var(--accent);
+}
+
 .dashboard-root--overview .overview-bento__tile-title {
   font-family: var(--font-display);
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   font-weight: 650;
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.6rem;
   letter-spacing: -0.02em;
   color: var(--ink);
 }
 
 .dashboard-root--overview .overview-bento__tile-title--sub {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--muted);
   margin-bottom: 0.3rem;
 }
@@ -3300,6 +3373,14 @@ ul.plain li {
   opacity: 0.85;
 }
 
+.dashboard-root--overview .overview-bento .overview-fund--current {
+  border-left: 2px solid var(--accent);
+  padding-left: 0.55rem;
+}
+.dashboard-root--overview .overview-bento .overview-fund--target {
+  border-left: 2px solid #4a6fa5;
+  padding-left: 0.55rem;
+}
 .dashboard-root--overview .overview-bento .overview-fund {
   padding: 0.32rem 0.4rem;
   border-radius: 10px;
@@ -4780,3 +4861,298 @@ ul.plain li {
   width: auto;
   display: block;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   Overview redesign  (ov-* prefix)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Root */
+.ov { display: flex; flex-direction: column; }
+
+/* ── Hero ─────────────────────────────────────────────────────── */
+.ov-hero {
+  background: #f7f8f6;
+  color: var(--text);
+  padding: 2.25rem clamp(1.25rem, 5vw, 3rem) 2.25rem;
+  border-bottom: 1px solid #e8ebe6;
+}
+.ov-hero__inner {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+.ov-hero__left {
+  border-left: 3px solid var(--accent);
+  padding-left: 1.1rem;
+  flex-shrink: 0;
+}
+.ov-hero__right {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.ov-hero__stamp { display: none; }
+
+.ov-hero__eyebrow {
+  font-size: 0.63rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin: 0 0 0.3rem;
+}
+.ov-hero__value {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4.5vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin: 0;
+  color: #111;
+}
+.ov-hero__currency {
+  font-size: 0.42em;
+  color: #666;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.ov-hero__stats {
+  display: flex;
+  gap: 1.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ov-stat { display: flex; flex-direction: column; gap: 0.1rem; }
+.ov-stat__label { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.09em; color: #888; }
+.ov-stat__value { font-size: 0.95rem; font-weight: 700; color: #111; }
+
+.ov-hero__divider {
+  width: 1px;
+  height: 2.5rem;
+  background: #dde0db;
+  flex-shrink: 0;
+}
+
+.ov-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.85rem;
+  border-radius: 99px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.ov-badge--ok   { background: rgba(42,77,66,0.08); color: var(--accent); border: 1px solid rgba(42,77,66,0.18); }
+.ov-badge--warn { background: rgba(200,140,30,0.1); color: #b07a10;      border: 1px solid rgba(200,140,30,0.22); }
+
+@media (max-width: 600px) {
+  .ov-hero__inner  { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
+  .ov-hero__right  { gap: 1.25rem; }
+  .ov-hero__divider { display: none; }
+}
+
+/* ── Body ─────────────────────────────────────────────────────── */
+.ov-body {
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 1.5rem clamp(1rem, 4vw, 2.5rem) 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ── Cards ────────────────────────────────────────────────────── */
+.ov-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.35rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(28,36,48,0.04), 0 6px 20px rgba(28,36,48,0.07);
+}
+.ov-card__title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 650;
+  margin: 0 0 0.2rem;
+  letter-spacing: -0.02em;
+}
+.ov-card__sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0 0 1.1rem;
+  line-height: 1.45;
+}
+
+/* Action card — dark green */
+.ov-card--action {
+  background: linear-gradient(135deg, #1e3d33 0%, #2a4d42 60%, #1a3228 100%);
+  border-color: transparent;
+  box-shadow: 0 4px 28px rgba(20,44,34,0.28);
+  color: #fff;
+}
+.ov-card--action .ov-card__title { color: #fff; }
+.ov-card--action .ov-card__sub   { color: rgba(255,255,255,0.65); }
+.ov-card__action-inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.ov-card__action-btns { flex-shrink: 0; }
+.ov-btn-white {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--accent);
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+.ov-btn-white:hover:not(:disabled) { background: #f0f0ee; }
+.ov-btn-white:disabled { opacity: 0.5; cursor: not-allowed; }
+.ov-error { font-size: 0.78rem; color: #f87a7a; margin: 0.6rem 0 0; }
+.ov-hint  { font-size: 0.78rem; color: rgba(255,255,255,0.55); margin: 0.4rem 0 0; }
+
+/* Celebration card */
+.ov-card--celebration {
+  background: linear-gradient(135deg, #f0f7f4 0%, #e8f3ee 100%);
+  border-color: rgba(42,77,66,0.15);
+  text-align: center;
+  padding: 2rem 1.75rem;
+}
+.ov-celebration__emoji { font-size: 2rem; margin: 0 0 0.5rem; }
+.ov-celebration__title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+.ov-celebration__text {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  max-width: 50ch;
+  margin: 0 auto;
+}
+
+/* ── Fee banner ───────────────────────────────────────────────── */
+.ov-fee-banner {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(28,36,48,0.04), 0 6px 20px rgba(28,36,48,0.07);
+  flex-wrap: wrap;
+}
+.ov-fee-banner__col { display: flex; flex-direction: column; gap: 0.15rem; }
+.ov-fee-banner__col--saving { flex: 1; min-width: 160px; }
+.ov-fee-banner__label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.ov-fee-banner__num { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+.ov-fee-banner__num--warn { color: #c0392b; }
+.ov-fee-banner__num--ok   { color: var(--accent); }
+.ov-fee-banner__arrow { font-size: 1.2rem; color: var(--muted); flex-shrink: 0; }
+.ov-fee-banner__divider { width: 1px; background: var(--line); align-self: stretch; flex-shrink: 0; }
+.ov-fee-banner__saving {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.ov-fee-banner__note { font-size: 0.65rem; color: var(--muted); margin: 0.2rem 0 0; line-height: 1.4; }
+
+/* ── Split grid ───────────────────────────────────────────────── */
+.ov-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 600px) {
+  .ov-split { grid-template-columns: 1fr; }
+}
+
+/* ── Section label ────────────────────────────────────────────── */
+.ov-section-label {
+  font-size: 0.63rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin: 0 0 0.85rem;
+}
+
+/* ── Holding rows ─────────────────────────────────────────────── */
+.ov-holding {
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.ov-holding:last-child { border-bottom: none; }
+.ov-holding__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+.ov-holding__name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.ov-holding__value { font-size: 0.82rem; font-weight: 700; color: var(--ink); flex-shrink: 0; }
+.ov-holding__bar-wrap {
+  height: 4px;
+  background: var(--line);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 0.3rem;
+}
+.ov-holding__bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.5s cubic-bezier(0.22,1,0.36,1);
+}
+.ov-holding--target .ov-holding__bar { background: #4a6fa5; }
+.ov-holding__meta { font-size: 0.68rem; color: var(--muted); margin: 0; }
+
+/* ── Switch list ──────────────────────────────────────────────── */
+.ov-switch-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.ov-switch-item {
+  padding-left: 0.85rem;
+  border-left: 2px solid var(--accent);
+}
+.ov-switch-item__name  { font-size: 0.85rem; font-weight: 600; }
+.ov-switch-item__value { font-size: 0.8rem; color: var(--muted); margin-left: 0.5rem; }
+.ov-switch-item__why   { font-size: 0.75rem; color: var(--muted); margin: 0.2rem 0 0; line-height: 1.45; }

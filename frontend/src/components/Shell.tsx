@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useAuth } from '../auth'
 import logoSvg from '../../pictures/logo.svg'
+import { AdvisorChat } from './AdvisorChat'
 
 type Props = {
   children: ReactNode
@@ -33,6 +34,7 @@ export function Shell({ children, variant = 'default', hideFooter = false }: Pro
         )}
       </header>
       <main className={`shell-main${hideFooter ? ' shell-main--fill' : ''}`}>{children}</main>
+      {token && <AdvisorChat />}
     </div>
   )
 }
