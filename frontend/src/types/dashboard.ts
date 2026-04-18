@@ -1,3 +1,19 @@
+export type FundRecommendation = {
+  isin: string
+  name: string
+  role: 'equity' | 'fixed_income' | string
+  suggested_weight_pct: number
+  ongoing_fee_pct: number
+  rationale: string
+}
+
+export type Recommendations = {
+  target_equity_pct: number
+  target_bond_pct: number
+  rationale: string
+  recommendations: FundRecommendation[]
+}
+
 export type Overview = {
   profile: {
     risk_tolerance: number | null
@@ -25,4 +41,5 @@ export type Overview = {
     }[]
     source_holdings: { name: string; value_sek: number }[]
   } | null
+  recommendations?: Recommendations | null
 }

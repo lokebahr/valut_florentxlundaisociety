@@ -191,17 +191,24 @@ export function DashboardOverview({
   const total = totalValueSek(holdings)
   const followsAdvice = !showMontrosePrepare
 
-  const recommendedPreview =
-    montroseBuyPlan?.buy_lines?.map((line) => ({
-      name: line.target_fund_name,
-      value_sek: line.amount_sek,
-      ongoing_fee_pct: line.target_fund_name.includes('Ränta') ? 0.15 : 0.18,
-    })) ??
-    suggested.map((s) => ({
-      name: s.name,
-      value_sek: Math.round((s.target_weight ?? 0) * total),
-      ongoing_fee_pct: s.name.includes('Ränta') ? 0.15 : 0.18,
-    }))
+  const aiRecs = data.recommendations?.recommendations ?? null
+  const recommendedPreview: { name: string; value_sek: number; ongoing_fee_pct: number }[] =
+    aiRecs?.length
+      ? aiRecs.map((r) => ({
+          name: r.name,
+          value_sek: Math.round((r.suggested_weight_pct / 100) * total),
+          ongoing_fee_pct: r.ongoing_fee_pct ?? 0,
+        }))
+      : montroseBuyPlan?.buy_lines?.map((line) => ({
+          name: line.target_fund_name,
+          value_sek: line.amount_sek,
+          ongoing_fee_pct: line.target_fund_name.toLowerCase().includes('ränte') ? 0.10 : 0.19,
+        })) ??
+        suggested.map((s) => ({
+          name: s.name,
+          value_sek: Math.round((s.target_weight ?? 0) * total),
+          ongoing_fee_pct: s.name.toLowerCase().includes('ränte') ? 0.10 : 0.19,
+        }))
 
   const bentoClass = followsAdvice ? 'overview-bento overview-bento--aligned' : 'overview-bento overview-bento--drift'
 
@@ -294,7 +301,15 @@ export function DashboardOverview({
                   <div className="overview-fund-grid overview-fund-grid--bento">{recommendedPreview.map((h, i) => fundCard(h, 'target', `t-${i}`))}</div>
                 </div>
                 <div className="overview-bento__cell overview-bento__cell--span-2 overview-bento__cell--fee-figures">
-                  <FeeCompareFigures totalSek={total} feeCurrent={feeW} feeTarget={RECOMMENDED_BLEND_FEE_PCT} />
+                  <FeeCompareFigures
+                    totalSek={total}
+                    feeCurrent={feeW}
+                    feeTarget={
+                      aiRecs?.length
+                        ? aiRecs.reduce((s, r) => s + (r.ongoing_fee_pct ?? 0) * (r.suggested_weight_pct / 100), 0)
+                        : RECOMMENDED_BLEND_FEE_PCT
+                    }
+                  />
                 </div>
                 <div className="overview-bento__cell overview-bento__cell--span-2 overview-bento__cell--advice">
                   <section className="overview-advice overview-advice--bento">

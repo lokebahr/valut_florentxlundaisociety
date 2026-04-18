@@ -1,4 +1,46 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+
+const INVESTMENT_QUOTES = [
+  { text: 'Tid i marknaden slår alltid tajming av marknaden.', author: null },
+  { text: 'Diversifiering är den enda gratislunchen inom finans.', author: 'Harry Markowitz' },
+  { text: 'Ränta-på-ränta är världens åttonde underverk.', author: 'tillskriven Albert Einstein' },
+  { text: 'Marknaden är ett instrument för att flytta pengar från de otåliga till de tålmodiga.', author: 'Warren Buffett' },
+  { text: 'En låg avgift är det enda säkra i ditt sparande.', author: null },
+  { text: 'Investera brett, behåll länge och håll kostnaderna låga.', author: 'John Bogle' },
+  { text: 'De flesta aktiva fonder underpresterar sitt index — netto efter avgifter.', author: null },
+  { text: 'Det bästa sättet att förutspå framtiden är att inte försöka.', author: 'John Bogle' },
+  { text: 'Risk och tid hänger ihop: ju längre horisont, desto mer risk har du råd att ta.', author: null },
+  { text: 'Sluta försöka hitta rätt tillfälle — börja investera nu.', author: null },
+  { text: 'Hemlandsbias kostar mer än de flesta investerare inser.', author: null },
+  { text: 'Varje avgiftsprocent äter upp tiotusentals kronor sett över 30 år.', author: null },
+  { text: 'Aktiemarknaden är designad för att belöna tålamod, inte aktivitet.', author: null },
+  { text: 'En billig indexfond är det smartaste valet för de flesta sparare.', author: 'John Bogle' },
+  { text: 'Spara regelbundet, diversifiera brett, betala låga avgifter — resten tar sig självt.', author: null },
+] as const
+
+function QuoteRotator() {
+  const [idx, setIdx] = useState(() => Math.floor(Math.random() * INVESTMENT_QUOTES.length))
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisible(false)
+      setTimeout(() => {
+        setIdx((i) => (i + 1) % INVESTMENT_QUOTES.length)
+        setVisible(true)
+      }, 500)
+    }, 30_000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const quote = INVESTMENT_QUOTES[idx]
+  return (
+    <div className={`quote-rotator${visible ? ' quote-rotator--visible' : ''}`}>
+      <p className="quote-rotator__text">"{quote.text}"</p>
+      {quote.author && <p className="quote-rotator__author">— {quote.author}</p>}
+    </div>
+  )
+}
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import { HeroImage } from '../components/HeroImage'
@@ -512,11 +554,13 @@ export function Onboarding() {
   type AgentResult = {
     overall_assessment?: string
     issues?: AgentIssue[]
+    target_equity_pct?: number
+    target_bond_pct?: number
     error?: string
   }
   const [agentResult, setAgentResult] = useState<AgentResult | null>(null)
   const [agentLoading, setAgentLoading] = useState(false)
-  const [finishing, setFinishing] = useState(false)
+  const agentPreloadRef = useRef<Promise<AgentResult> | null>(null)
 
   useEffect(() => { window.scrollTo(0, 0) }, [step])
 
@@ -631,9 +675,10 @@ export function Onboarding() {
       expensive_loans: expensiveLoans,
       adjusted_risk_tolerance: adjustedRisk,
       monthly_contribution_sek: monthlyContributionSek,
+      scenario_answers_json: Object.keys(scenarioAnswers).length > 0 ? JSON.stringify(scenarioAnswers) : null,
       current_step: step,
     }),
-    [age, dependentsCount, disposableIncomeMonthlySek, expensiveLoans, monthlyContributionSek, adjustedRisk, riskTolerance, salaryMonthlySek, savingsPurpose, step, timeHorizonYears],
+    [age, dependentsCount, disposableIncomeMonthlySek, expensiveLoans, monthlyContributionSek, adjustedRisk, riskTolerance, salaryMonthlySek, savingsPurpose, scenarioAnswers, step, timeHorizonYears],
   )
 
   async function persistProfile(extra?: Record<string, unknown>) {
@@ -720,14 +765,27 @@ export function Onboarding() {
     if (step !== 10) return
     setAgentLoading(true)
     setAgentResult(null)
-    api<AgentResult>('/api/agent/assess', { method: 'POST' })
-      .then(setAgentResult)
-      .catch((e) => setAgentResult({ error: e instanceof Error ? e.message : 'Analysen misslyckades.' }))
-      .finally(() => setAgentLoading(false))
+    const run = async () => {
+      try {
+        const result = agentPreloadRef.current
+          ? await agentPreloadRef.current
+          : await api<AgentResult>('/api/agent/assess', { method: 'POST' })
+        agentPreloadRef.current = null
+        setAgentResult(result)
+        // Kick off recommendations in background while user reads the analysis
+        if (!result.error) {
+          api('/api/agent/recommend', { method: 'POST' }).catch(() => {})
+        }
+      } catch (e) {
+        setAgentResult({ error: e instanceof Error ? e.message : 'Analysen misslyckades.' })
+      } finally {
+        setAgentLoading(false)
+      }
+    }
+    run()
   }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function enrichAndAdvance() {
-    console.log('[enrichAndAdvance] calling /api/tink/enrich-holdings')
     setEnriching(true)
     setError(null)
     try {
@@ -735,11 +793,13 @@ export function Onboarding() {
         '/api/tink/enrich-holdings',
         { method: 'POST' },
       )
-      console.log('[enrichAndAdvance] response:', JSON.stringify(res, null, 2))
       setConnectData((prev) => prev ? { ...prev, holdings: res.holdings, analysis: res.analysis } : prev)
+      // Kick off agent analysis in the background so it's ready when the user reaches step 10
+      agentPreloadRef.current = api<AgentResult>('/api/agent/assess', { method: 'POST' }).catch(
+        (e) => ({ error: e instanceof Error ? e.message : 'Analysen misslyckades.' } as AgentResult),
+      )
       setStep(8)
     } catch (e) {
-      console.error('[enrichAndAdvance] failed:', e)
       setError(e instanceof Error ? e.message : 'Berikning misslyckades.')
     } finally {
       setEnriching(false)
@@ -1169,16 +1229,22 @@ export function Onboarding() {
                 </li>
               ))}
             </ul>
-            {enriching && (
-              <p className="muted small step-animate">Hämtar fonddata från faktablad…</p>
+            {enriching ? (
+              <div className="enriching-state step-animate">
+                <div className="enriching-state__spinner" />
+                <div className="enriching-state__dots">
+                  <span className="enriching-state__dot" />
+                  <span className="enriching-state__dot" />
+                  <span className="enriching-state__dot" />
+                </div>
+                <p className="enriching-state__text">Hämtar fonddata från faktablad…</p>
+              </div>
+            ) : (
+              <div className="step-nav">
+                <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
+                <button type="button" className="btn-primary" onClick={enrichAndAdvance}>Nästa</button>
+              </div>
             )}
-            <div className="step-nav">
-              <button type="button" className="btn-ghost" onClick={back} disabled={enriching}>Tillbaka</button>
-              <button type="button" className="btn-primary btn--loading" onClick={enrichAndAdvance} disabled={enriching}>
-                {enriching && <span className="btn-spinner" aria-hidden />}
-                {enriching ? 'Hämtar fondblad…' : 'Nästa'}
-              </button>
-            </div>
           </section>
         )}
 
@@ -1283,68 +1349,66 @@ export function Onboarding() {
         )}
 
         {/* Step 10 — Done + AI assessment */}
-        {step === 10 && (
-          <section key={step} className="surface step-animate stack">
+        {step === 10 && agentLoading && (
+          <section key="step10-loading" className="surface step-animate">
+            <div className="agent-loading-page">
+              <div className="agent-loading-page__spinner" />
+              <p className="agent-loading-page__label">Analyserar din portfölj</p>
+              <QuoteRotator />
+            </div>
+          </section>
+        )}
+
+        {step === 10 && !agentLoading && (
+          <section key="step10-result" className="surface step-animate stack">
             <HeroImage className="hero-image--compact" src={images.forestLight} alt={imageAlt.forestLight} />
             <div>
               <h2>Din portföljanalys</h2>
               <p className="muted">AI-rådgivaren har analyserat din portfölj och dina svar.</p>
             </div>
 
-            <div className="profile-preview">
-              <p className="profile-preview__label">Din investeringsprofil</p>
-              <p className="profile-preview__name">
-                {RISK_OPTIONS.find((o) => o.level === (adjustedRisk ?? riskTolerance))?.name}
-              </p>
-              <div className="profile-preview__metrics" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                <div className="profile-preview__metric">
-                  <div className="profile-preview__metric-label">Risk</div>
-                  <div className="profile-preview__metric-value">
-                    {RISK_OPTIONS.find((o) => o.level === (adjustedRisk ?? riskTolerance))?.name}
-                  </div>
-                </div>
-                <div className="profile-preview__metric">
-                  <div className="profile-preview__metric-label">Horisont</div>
-                  <div className="profile-preview__metric-value">{timeHorizonYears} år</div>
-                </div>
-                <div className="profile-preview__metric">
-                  <div className="profile-preview__metric-label">Mål</div>
-                  <div className="profile-preview__metric-value">
-                    {SAVINGS_PURPOSES.find((p) => p.value === savingsPurpose)?.label ?? savingsPurpose}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {agentLoading && (
-              <div className="agent-loading">
-                <span className="btn-spinner agent-loading__spinner" aria-hidden />
-                <p className="muted small">Analyserar din portfölj med AI…</p>
-              </div>
-            )}
-
             {agentResult && !agentResult.error && (
               <div className="stack">
+                {agentResult.target_equity_pct !== undefined && (
+                  <div className="reko-allocation reko-allocation--compact">
+                    <div className="reko-allocation__label">
+                      <span>Ditt mål</span>
+                      <span className="reko-allocation__pct">{agentResult.target_equity_pct}% aktier / {agentResult.target_bond_pct}% räntor</span>
+                    </div>
+                    <div className="reko-allocation__bar-wrap">
+                      <div className="reko-allocation__bar reko-allocation__bar--equity" style={{ width: `${agentResult.target_equity_pct}%` }} />
+                      <div className="reko-allocation__bar reko-allocation__bar--bond" style={{ width: `${agentResult.target_bond_pct}%` }} />
+                    </div>
+                  </div>
+                )}
                 {agentResult.overall_assessment && (
                   <p>{agentResult.overall_assessment}</p>
                 )}
-                {agentResult.issues && agentResult.issues.length > 0 && (
-                  <div>
-                    <p className="field-label">Identifierade problem</p>
-                    <ul className="issues">
-                      {agentResult.issues.map((issue, idx) => (
-                        <li key={`${issue.problem}-${idx}`} data-severity={issue.severity}>
-                          {issue.holding_name && (
-                            <div className="muted small" style={{ marginBottom: '0.25rem' }}>{issue.holding_name}</div>
-                          )}
-                          <strong>{issue.problem}</strong>
-                          <div className="muted small" style={{ marginTop: '0.35rem' }}>{issue.detail}</div>
-                          <div className="muted small" style={{ marginTop: '0.2rem', fontStyle: 'italic' }}>{issue.citation}</div>
-                        </li>
+                {agentResult.issues && agentResult.issues.length > 0 && (() => {
+                  const grouped = agentResult.issues!.reduce((acc, issue) => {
+                    const key = issue.holding_name || 'Portföljnivå'
+                    return { ...acc, [key]: [...(acc[key] || []), issue] }
+                  }, {} as Record<string, AgentIssue[]>)
+                  return (
+                    <div className="stack stack--tight">
+                      <p className="field-label">Identifierade problem</p>
+                      {Object.entries(grouped).map(([fundName, fundIssues]) => (
+                        <div key={fundName} className="issue-fund-group">
+                          <div className="issue-fund-group__name">{fundName}</div>
+                          <ul className="issue-fund-group__list">
+                            {fundIssues.map((issue, idx) => (
+                              <li key={idx} className="issue-fund-group__item" data-severity={issue.severity}>
+                                <div className="issue-fund-group__problem">{issue.problem}</div>
+                                <div className="muted small issue-fund-group__detail">{issue.detail}</div>
+                                <div className="muted small issue-fund-group__citation">{issue.citation}</div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       ))}
-                    </ul>
-                  </div>
-                )}
+                    </div>
+                  )
+                })()}
               </div>
             )}
 
@@ -1353,9 +1417,8 @@ export function Onboarding() {
             )}
 
             <form onSubmit={finishOnboarding}>
-              <button type="submit" className="btn-primary btn--loading" disabled={agentLoading || finishing}>
-                {(agentLoading || finishing) && <span className="btn-spinner" aria-hidden />}
-                {finishing ? 'Öppnar…' : agentLoading ? 'Analyserar…' : 'Öppna översikt'}
+              <button type="submit" className="btn-primary">
+                Öppna översikt
               </button>
             </form>
           </section>

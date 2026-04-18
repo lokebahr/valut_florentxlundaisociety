@@ -67,10 +67,36 @@
   #dropzone .dz-label strong { color: #4a90d9; }
   #dropzone .dz-sub { font-size: 0.7rem; color: #444; margin-top: 0.3rem; }
 
-  #file-name {
+  .file-queue {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .file-queue-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.5rem;
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 5px;
+    padding: 0.5rem 0.75rem;
     font-size: 0.75rem;
-    color: #777;
-    text-align: center;
+  }
+  .file-queue-item__name { color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-queue-item__status { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em; white-space: nowrap; }
+  .file-queue-item__status--pending  { color: #555; }
+  .file-queue-item__status--running  { color: #d4a843; }
+  .file-queue-item__status--ok       { color: #5cb85c; }
+  .file-queue-item__status--cached   { color: #4a90d9; }
+  .file-queue-item__status--error    { color: #e05c5c; }
+
+  #queue-summary {
+    font-size: 0.72rem;
+    color: #555;
+    text-align: right;
   }
 
   button {
@@ -240,22 +266,23 @@
 
 <!-- Left: Upload + parse result -->
 <div class="panel" id="left-panel">
-  <div class="panel-title">Parse PDF</div>
+  <div class="panel-title">Parse PDFs</div>
 
   <div id="dropzone">
-    <input type="file" accept="application/pdf" id="file-input" onchange="onFileSelect(this)">
+    <input type="file" accept="application/pdf" id="file-input" multiple onchange="onFilesSelect(this)">
     <div class="dz-icon">📄</div>
-    <div class="dz-label">Drop a fund factsheet here<br>or <strong>click to browse</strong></div>
-    <div class="dz-sub">PDF only</div>
+    <div class="dz-label">Drop fund factsheets here<br>or <strong>click to browse</strong></div>
+    <div class="dz-sub">PDF only · multiple files supported</div>
   </div>
 
-  <div id="file-name">No file selected</div>
+  <div class="file-queue" id="file-queue" style="display:none"></div>
+  <div id="queue-summary"></div>
 
-  <button id="parse-btn" onclick="parseFile()" disabled>Parse Fund</button>
+  <button id="parse-btn" onclick="parseAll()" disabled>Upload &amp; Parse All</button>
   <div id="status"></div>
 
   <div id="result-area">
-    <div class="result-empty">Parsed fund will appear here</div>
+    <div class="result-empty">Parsed funds will appear here</div>
   </div>
 </div>
 
@@ -267,8 +294,9 @@
 </div>
 
 <script>
-const API = 'http://localhost:8001';
-let selectedFile = null;
+const API = 'http://localhost:8000';
+const BATCH_SIZE = 3;
+let fileQueue = []; // { file, status: 'pending'|'running'|'ok'|'cached'|'error', msg }
 
 // Drag and drop
 const dz = document.getElementById('dropzone');
@@ -277,41 +305,90 @@ dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
 dz.addEventListener('drop', e => {
   e.preventDefault();
   dz.classList.remove('drag-over');
-  const f = e.dataTransfer.files[0];
-  if (f && f.type === 'application/pdf') setFile(f);
-  else setStatus('Only PDF files are supported.', 'error');
+  const files = [...e.dataTransfer.files].filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+  if (!files.length) { setStatus('Only PDF files are supported.', 'error'); return; }
+  addFiles(files);
 });
 
-function onFileSelect(input) {
-  if (input.files[0]) setFile(input.files[0]);
+function onFilesSelect(input) {
+  const files = [...input.files];
+  if (files.length) addFiles(files);
+  input.value = '';
 }
 
-function setFile(f) {
-  selectedFile = f;
-  document.getElementById('file-name').textContent = f.name;
-  document.getElementById('parse-btn').disabled = false;
+function addFiles(files) {
+  for (const f of files) {
+    if (!fileQueue.find(q => q.file.name === f.name && q.file.size === f.size)) {
+      fileQueue.push({ file: f, status: 'pending', msg: '' });
+    }
+  }
+  renderQueue();
   setStatus('');
 }
 
-async function parseFile() {
-  if (!selectedFile) return;
-  const btn = document.getElementById('parse-btn');
-  btn.disabled = true;
-  setStatus('Parsing…');
+function renderQueue() {
+  const el = document.getElementById('file-queue');
+  const summary = document.getElementById('queue-summary');
+  if (!fileQueue.length) { el.style.display = 'none'; summary.textContent = ''; document.getElementById('parse-btn').disabled = true; return; }
+  el.style.display = 'flex';
+  el.innerHTML = fileQueue.map((q, i) => `
+    <div class="file-queue-item">
+      <div class="file-queue-item__name" title="${q.file.name}">${q.file.name}</div>
+      <div class="file-queue-item__status file-queue-item__status--${q.status}">
+        ${q.status === 'pending' ? 'queued' : q.status === 'running' ? '⏳' : q.status === 'ok' ? '✓ stored' : q.status === 'cached' ? '✓ cached' : '✗ error'}
+      </div>
+    </div>`).join('');
+  const pending = fileQueue.filter(q => q.status === 'pending').length;
+  const done = fileQueue.filter(q => q.status === 'ok' || q.status === 'cached').length;
+  const errors = fileQueue.filter(q => q.status === 'error').length;
+  summary.textContent = `${fileQueue.length} file${fileQueue.length !== 1 ? 's' : ''} · ${done} done · ${errors} errors`;
+  const allDone = fileQueue.every(q => q.status !== 'pending' && q.status !== 'running');
+  document.getElementById('parse-btn').disabled = allDone && !pending;
+  if (pending) document.getElementById('parse-btn').disabled = false;
+}
 
+async function parseSingle(entry) {
+  entry.status = 'running';
+  renderQueue();
   try {
     const form = new FormData();
-    form.append('file', selectedFile);
+    form.append('file', entry.file);
     const res = await fetch(`${API}/funds/parse`, { method: 'POST', body: form });
     const data = await res.json();
-    if (!res.ok) { setStatus((data.detail || JSON.stringify(data)), 'error'); return; }
-    renderFundCard(data.fund, data.cached, 'result-area');
-    setStatus(data.cached ? 'Returned from cache.' : 'Parsed and stored.', 'ok');
+    if (!res.ok) { entry.status = 'error'; entry.msg = data.detail || JSON.stringify(data); return null; }
+    entry.status = data.cached ? 'cached' : 'ok';
+    return data;
   } catch(e) {
-    setStatus('Request failed: ' + e.message, 'error');
+    entry.status = 'error';
+    entry.msg = e.message;
+    return null;
   } finally {
-    btn.disabled = false;
+    renderQueue();
   }
+}
+
+async function parseAll() {
+  const pending = fileQueue.filter(q => q.status === 'pending');
+  if (!pending.length) return;
+  document.getElementById('parse-btn').disabled = true;
+  setStatus(`Uploading ${pending.length} file${pending.length !== 1 ? 's' : ''} in batches of ${BATCH_SIZE}…`);
+
+  let lastResult = null;
+  for (let i = 0; i < pending.length; i += BATCH_SIZE) {
+    const batch = pending.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(batch.map(parseSingle));
+    for (const r of results) { if (r?.fund) lastResult = r; }
+  }
+
+  const ok = fileQueue.filter(q => q.status === 'ok').length;
+  const cached = fileQueue.filter(q => q.status === 'cached').length;
+  const errors = fileQueue.filter(q => q.status === 'error').length;
+  setStatus(`Done: ${ok} stored, ${cached} cached${errors ? `, ${errors} errors` : ''}.`, errors ? 'error' : 'ok');
+  if (lastResult) renderFundCard(lastResult.fund, lastResult.cached, 'result-area');
+
+  // Reset pending items so re-click processes only failed ones
+  fileQueue = fileQueue.filter(q => q.status !== 'ok' && q.status !== 'cached');
+  renderQueue();
 }
 
 function bracket(f) {

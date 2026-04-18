@@ -21,6 +21,8 @@ class OnboardingProfile(database.Model):
 
     adjusted_risk_tolerance = IntegerField(null=True)
     monthly_contribution_sek = IntegerField(null=True)
+    scenario_answers_json = TextField(null=True)
+    recommendations_json = TextField(null=True)
 
     onboarding_completed = BooleanField(default=False)
     current_step = IntegerField(default=0)

@@ -5,7 +5,7 @@ import { DashboardOverview } from '../components/DashboardOverview'
 import { SavingsGoalPanel } from '../components/SavingsGoalPanel'
 import { Shell } from '../components/Shell'
 import { savingsPurposeSv } from '../lib/sv'
-import type { Overview } from '../types/dashboard'
+import type { Overview, Recommendations } from '../types/dashboard'
 
 type MontroseBuyTicket = {
   name: string
@@ -33,7 +33,7 @@ type MontrosePrepareResponse = {
   snapshot_refreshed?: boolean
 }
 
-type Tab = 'overview' | 'profile' | 'tracker'
+type Tab = 'overview' | 'rekommenderat' | 'profile' | 'tracker'
 
 function montroseTradeUrl(decoded: unknown): string | null {
   if (decoded && typeof decoded === 'object' && 'url' in decoded) {
@@ -218,6 +218,9 @@ export function Dashboard() {
             <button type="button" className="dash-tab" onClick={() => setTab('overview')}>
               Översikt
             </button>
+            <button type="button" className={`dash-tab${tab === 'rekommenderat' ? ' dash-tab--active' : ''}`} onClick={() => setTab('rekommenderat')}>
+              Rekommenderat
+            </button>
             <button type="button" className={`dash-tab${tab === 'profile' ? ' dash-tab--active' : ''}`} onClick={() => setTab('profile')}>
               Profil
             </button>
@@ -287,9 +290,110 @@ export function Dashboard() {
           </div>
         )}
 
+        {tab === 'rekommenderat' && (
+          <RekommenderatTab recommendations={data.recommendations ?? null} holdings={data.holdings} />
+        )}
+
         {tab === 'tracker' && <TrackerTab holdings={data.holdings} monthlySek={data.profile.monthly_contribution_sek} />}
       </div>
     </Shell>
+  )
+}
+
+function RekommenderatTab({
+  recommendations,
+  holdings,
+}: {
+  recommendations: Recommendations | null
+  holdings: Record<string, unknown>[]
+}) {
+  if (!recommendations) {
+    return (
+      <div className="surface step-animate">
+        <h1 style={{ margin: '0 0 0.5rem' }}>Rekommenderat</h1>
+        <p className="muted">
+          Rekommendationerna genereras automatiskt när du slutför introduktionen. Gå till{' '}
+          <Link to="/onboarding">introduktionen</Link> för att komma igång.
+        </p>
+      </div>
+    )
+  }
+
+  const { target_equity_pct, target_bond_pct, rationale, recommendations: funds } = recommendations
+
+  const currentAvgFee =
+    holdings.length > 0
+      ? holdings.reduce((sum, h) => sum + Number(h.ongoing_fee_pct || 0), 0) / holdings.length
+      : null
+
+  const recommendedAvgFee =
+    funds.length > 0
+      ? funds.reduce((sum, f) => sum + (f.ongoing_fee_pct || 0), 0) / funds.length
+      : null
+
+  const totalInvested = holdings.reduce((sum, h) => sum + Number(h.value_sek || 0), 0)
+  const annualFeeSaving =
+    currentAvgFee !== null && recommendedAvgFee !== null && totalInvested > 0
+      ? Math.round(((currentAvgFee - recommendedAvgFee) / 100) * totalInvested)
+      : null
+
+  return (
+    <div className="stack step-animate">
+      <div className="surface">
+        <h1 style={{ margin: '0 0 0.35rem' }}>Rekommenderat</h1>
+        <p className="muted small" style={{ marginBottom: '1.5rem' }}>{rationale}</p>
+
+        <div className="reko-allocation">
+          <div className="reko-allocation__label">
+            <span>Aktier</span>
+            <span className="reko-allocation__pct">{target_equity_pct}%</span>
+          </div>
+          <div className="reko-allocation__bar-wrap">
+            <div className="reko-allocation__bar reko-allocation__bar--equity" style={{ width: `${target_equity_pct}%` }} />
+            <div className="reko-allocation__bar reko-allocation__bar--bond" style={{ width: `${target_bond_pct}%` }} />
+          </div>
+          <div className="reko-allocation__label">
+            <span>Räntor</span>
+            <span className="reko-allocation__pct">{target_bond_pct}%</span>
+          </div>
+        </div>
+
+        {annualFeeSaving !== null && annualFeeSaving > 0 && (
+          <div className="reko-fee-saving">
+            <span className="reko-fee-saving__label">Beräknad avgiftsbesparing per år</span>
+            <span className="reko-fee-saving__value">
+              ~{annualFeeSaving.toLocaleString('sv-SE')} kr
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="surface">
+        <p className="field-label" style={{ marginBottom: '1rem' }}>Rekommenderade fonder</p>
+        <div className="reko-funds">
+          {funds.map((f) => (
+            <article key={f.isin} className="reko-fund">
+              <div className="reko-fund__header">
+                <div>
+                  <p className="reko-fund__name">{f.name}</p>
+                  <p className="reko-fund__isin muted small">{f.isin}</p>
+                </div>
+                <div className="reko-fund__meta">
+                  <span className={`reko-fund__role${f.role === 'equity' ? ' reko-fund__role--equity' : ' reko-fund__role--bond'}`}>
+                    {f.role === 'equity' ? 'Aktier' : 'Räntor'}
+                  </span>
+                  <span className="reko-fund__weight">{f.suggested_weight_pct}%</span>
+                </div>
+              </div>
+              <p className="reko-fund__rationale muted small">{f.rationale}</p>
+              <div className="reko-fund__fee">
+                Avgift: <strong>{f.ongoing_fee_pct !== null && f.ongoing_fee_pct !== undefined ? `${f.ongoing_fee_pct}%` : '—'}</strong>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 

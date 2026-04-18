@@ -14,72 +14,25 @@ import anthropic
 from app.config import Config
 from app.services.fund_enrichment import enrich_holdings
 
-_SYSTEM = """Du är en expert på svenska investeringar och fondanalys. Du utvärderar en användares fondportfölj utifrån ett evidensbaserat ramverk inspirerat av akademisk forskning och Lysas investeringsfilosofi.
+_SYSTEM = """Du är expert på svenska investeringar. Analysera varför användarens NUVARANDE fonder är suboptimala för just denna person.
 
-VIKTIGT: Du ska ENDAST peka ut problem (issues) och en kort sammanfattning. 
-Ge INTE rekommendationer om specifika ersättningsfonder, ISIN eller fondbyten. 
-Ge INTE ombalanseringsråd som steg-för-steg-allokering — fokusera på vad som är fel och varför.
+Fokusera ENBART på de fonder användaren äger. Koppla varje problem till ett konkret fondattribut (avgift, domicil, förvaltningstyp osv.) OCH ett specifikt användarattribut (risk, horisont, syfte, beteendeprofil).
 
-BEDÖMNINGSRAMVERK (tillämpa strikt):
+REGLER:
+- Avgift > 0.5 %: hög allvarlighet (Berk & Green 2004)
+- Avgift 0.3–0.5 %: medel allvarlighet
+- Aktiv fond som underpresterat benchmark: flagga (Carhart 1997)
+- LU-domicil i ISK: källskatteläckage
+- Aktieandel avviker > 12 % från mål: riskavvikelse (Markowitz 1952)
+- Hemlandsbias > 40 %: diversifieringsproblem (Solnik 1974)
 
-1. KOSTNADER — Viktigaste prediktorn för netttoavkastning
-   - Löpande avgift > 0.5%: HÖG allvarlighet. Aktiva fonder returnerar avgifter till investerare som underprestation.
-   - Löpande avgift 0.3-0.5%: MEDEL allvarlighet.
-   - Mål: under 0.3% för indexfonder.
-   - Källa: French (2008), Berk & Green (2004)
-
-2. AKTIV vs PASSIV
-   - 65-75% av aktivt förvaltade fonder underpresterar sitt jämförelseindex efter avgifter.
-   - Aktiv förvaltning är inte evidensbaserad utan särskild anledning.
-   - Källa: Fama (1970), Carhart (1997)
-
-3. RISKANPASSNING — Anpassa till denna användare
-   - Beräkna målaktieandel: bas 35% vid risk=1, +10% per risknivå, +10% om horisont >15 år, -15% om horisont <3 år
-   - Om faktisk aktieandel avviker >12% från mål: flagga som felplacering
-   - Källa: Markowitz (1952), Merton (1969)
-
-4. DIVERSIFIERING
-   - Sverige = ~1% av världens börsvärde. Hemmalandsbias >40% i aktier är problematiskt.
-   - Lysa tillåter ~20% svensk hemmalandsbias av köpkraftsskäl.
-   - Koncentration i ett enda land/sektor: flagga
-   - Källa: Solnik (1974), French & Poterba (1991)
-
-5. SKATTEEFFEKTIVITET
-   - Luxemburg-domicilierade fonder (domicil=LU) i ISK-konton kan skapa källskatteeffekter.
-   - Svensk domicil föredras för ISK när kostnaden är likvärdig.
-
-6. AVKASTNING
-   - 3-årig överavkastning vs jämförelseindex < -1%: fonden underpresterar konsekvent.
-
-UTDATAFORMAT — svara med ett enda JSON-objekt (endast dessa nycklar):
-{
-  "overall_assessment": "2-3 meningar om portföljsituationen specifikt för denna användare",
-  "issues": [
-    {
-      "holding_name": "sträng",
-      "severity": "high|medium|low",
-      "category": "cost|active_management|risk_alignment|diversification|tax|performance",
-      "problem": "kort titel",
-      "detail": "specifik förklaring med referens till användarens profil och innehavens fält (avgift, domicil, benchmark, m.m.)",
-      "citation": "forskningsreferens"
-    }
-  ]
-}
-
-Om inget är fel: "issues" kan vara en tom lista och overall_assessment kort motiverar det.
-
-Svara ENDAST med det slutliga JSON-objektet. Ingen förklaring utanför JSON."""
+Svara ENBART med detta JSON (inga extra nycklar, ingen text utanför):
+{"overall_assessment":"1-2 meningar","issues":[{"holding_name":"","severity":"high|medium|low","category":"cost|active_management|risk_alignment|diversification|tax|performance","problem":"kort titel","detail":"1 mening med konkret fondattribut + användarkontext","citation":"källa"}]}"""
 
 
 def _normalize_agent_payload(data: dict[str, Any]) -> dict[str, Any]:
-    """Drop legacy keys if the model returns them anyway."""
     out = dict(data)
-    for k in (
-        "recommendations",
-        "rebalancing_advice",
-        "no_alternatives_found",
-        "target_allocation",
-    ):
+    for k in ("recommendations", "rebalancing_advice", "no_alternatives_found", "target_allocation"):
         out.pop(k, None)
     return out
 
@@ -95,12 +48,38 @@ def _target_equity(risk: int | None, horizon: int | None) -> float:
     return round(max(0.15, min(0.95, base)), 2)
 
 
+def _scenario_summary(scenario_json: str | None) -> str:
+    if not scenario_json:
+        return ""
+    try:
+        answers: dict[str, int] = json.loads(scenario_json)
+    except (json.JSONDecodeError, TypeError):
+        return ""
+    if not answers:
+        return ""
+    label_map = {
+        "bull": "uppgång",
+        "bear": "nedgång",
+        "patience": "sidorörelser",
+        "recovery": "krasch+återhämtning",
+        "volatile": "volatilitet",
+        "bubble": "bubbla",
+    }
+    parts = [f"{label_map.get(k, k)}: {v}" for k, v in answers.items() if v is not None]
+    values = [v for v in answers.values() if v is not None]
+    avg = round(sum(values) / len(values), 1) if values else None
+    summary = ", ".join(parts)
+    if avg is not None:
+        summary += f" → genomsnitt {avg}/5"
+    return summary
+
+
 def assess(profile: dict[str, Any], holdings: list[dict[str, Any]]) -> dict[str, Any]:
     api_key = (Config.ANTHROPIC_API_KEY or "").strip()
     if not api_key:
         return {
             "error": "missing_api_key",
-            "message": "Sätt ANTHROPIC_API_KEY i backend/.env (eller miljön) för att köra portföljbedömningen.",
+            "message": "Sätt ANTHROPIC_API_KEY i backend/.env för att köra portföljbedömningen.",
             "overall_assessment": "",
             "issues": [],
         }
@@ -120,66 +99,70 @@ def assess(profile: dict[str, Any], holdings: list[dict[str, Any]]) -> dict[str,
         sum(float(h.get("equity_share") or 0) * float(h.get("value_sek") or 0) for h in holdings) / total_sek, 2
     )
 
-    user_context = f"""ANVÄNDARPROFIL:
-- Risktolerans: {risk}/5
-- Tidshorisont: {horizon} år
-- Sparsyfte: {profile.get("savings_purpose")}
-- Ålder: {profile.get("age")}
-- Månadslön: {profile.get("salary_monthly_sek")} SEK
-- Barn/beroende: {profile.get("dependents_count")}
-- Har dyra lån: {profile.get("expensive_loans")}
-- Månadssparande: {profile.get("monthly_contribution_sek")} SEK
+    scenario_line = _scenario_summary(profile.get("scenario_answers_json"))
+    behavioral_note = ""
+    if scenario_line:
+        behavioral_note = f"\n- Beteendescenarier (1–5): {scenario_line}"
+        stated = profile.get("stated_risk_tolerance") or risk
+        if stated and risk and stated != risk:
+            behavioral_note += f"\n- Justerad risk ({risk}) skiljer sig från stated ({stated})"
 
-BERÄKNADE MÅL (Markowitz/Merton-ramverk):
-- Målaktieandel: {target_eq:.0%}
-- Målränteandel: {target_bond:.0%}
-- Faktisk aktieandel: {actual_eq:.0%}
-
-NUVARANDE INNEHAV (totalt värde: {int(total_sek):,} SEK):
-{json.dumps(holdings, ensure_ascii=False, indent=2)}
-
-Din uppgift:
-1. Bedöm kritiskt varför denna portfölj kan vara suboptimal FÖR DENNA SPECIFIKA ANVÄNDARE.
-2. Använd enbart uppgifterna i innehaven (inkl. fält som kommer från faktablad om de finns).
-3. Returnera JSON enligt specifikationen — inga fondrekommendationer."""
+    user_context = (
+        f"PROFIL:\n"
+        f"- Risk: {risk}/5, horisont: {horizon} år, syfte: {profile.get('savings_purpose')}\n"
+        f"- Ålder: {profile.get('age')}, lön: {profile.get('salary_monthly_sek')} kr/mån\n"
+        f"- Beroende: {profile.get('dependents_count')}, dyra lån: {profile.get('expensive_loans')}\n"
+        f"- Månadssparande: {profile.get('monthly_contribution_sek')} kr{behavioral_note}\n"
+        f"\nMÅL (Markowitz/Merton): aktier {target_eq:.0%} / räntor {target_bond:.0%}\n"
+        f"FAKTISK aktieandel: {actual_eq:.0%}\n"
+        f"\nINNEHAV ({int(total_sek):,} SEK totalt):\n"
+        f"{json.dumps(holdings, ensure_ascii=False, indent=2)}\n"
+        f"\nReturnera JSON enligt systeminstruktionen. Inga fondrekommendationer."
+    )
 
     messages: list[dict[str, Any]] = [{"role": "user", "content": user_context}]
 
-    for _ in range(3):
+    for attempt in range(2):
         response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=4096,
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1200,
             system=_SYSTEM,
             messages=messages,
         )
 
+        raw_text = ""
         for block in response.content:
             if not hasattr(block, "text"):
                 continue
-            text = block.text.strip()
-            if not text:
-                continue
-            if "```" in text:
-                inner = text.split("```")[1]
-                if inner.startswith("json"):
-                    inner = inner[4:]
-                text = inner.strip()
-            if not text.startswith("{"):
-                start = text.find("{")
-                end = text.rfind("}")
-                if start != -1 and end != -1:
-                    text = text[start : end + 1]
-            if not text:
-                continue
-            try:
-                return _normalize_agent_payload(json.loads(text))
-            except json.JSONDecodeError:
-                continue
+            raw_text = block.text.strip()
+            break
+
+        print(f"[fund_agent] attempt={attempt} stop_reason={response.stop_reason} raw={raw_text[:300]!r}")
+
+        if not raw_text:
+            continue
+
+        text = raw_text
+        if "```" in text:
+            inner = text.split("```")[1]
+            if inner.startswith("json"):
+                inner = inner[4:]
+            text = inner.strip()
+        if not text.startswith("{"):
+            start = text.find("{")
+            end = text.rfind("}")
+            if start != -1 and end != -1:
+                text = text[start : end + 1]
+
+        try:
+            return _normalize_agent_payload(json.loads(text))
+        except json.JSONDecodeError as exc:
+            print(f"[fund_agent] JSON parse error: {exc}")
 
         messages.append({"role": "assistant", "content": response.content})
         messages.append({
             "role": "user",
-            "content": "Svara endast med giltigt JSON enligt systeminstruktionen (overall_assessment + issues).",
+            "content": "Svara endast med giltigt JSON (overall_assessment + issues).",
         })
 
     return {"error": "Agent did not produce a result."}

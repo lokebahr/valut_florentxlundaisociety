@@ -62,6 +62,14 @@ def overview():
         if show_montrose
         else None
     )
+    rj = getattr(profile, "recommendations_json", None)
+    recommendations = None
+    if rj:
+        try:
+            recommendations = json.loads(rj)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
     return jsonify(
         {
             "profile": {
@@ -80,6 +88,7 @@ def overview():
             "montrose_enabled": connected,
             "montrose_show_prepare_switch": show_montrose,
             "montrose_buy_plan": buy_plan,
+            "recommendations": recommendations,
         }
     )
 

@@ -30,6 +30,13 @@ def health():
     return {"status": "ok"}
 
 
+# Chrome DevTools probes this on every page load — return empty JSON to silence the 404 logs.
+@app.get("/.well-known/appspecific/com.chrome.devtools.json", include_in_schema=False)
+def chrome_devtools():
+    from fastapi.responses import JSONResponse
+    return JSONResponse({})
+
+
 @app.get("/")
 def ui():
     from pathlib import Path

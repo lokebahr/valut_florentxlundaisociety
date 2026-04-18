@@ -25,6 +25,18 @@ _TABLES = [
 ]
 
 
+def _ensure_onboarding_profile_columns():
+    try:
+        cursor = database.execute_sql("PRAGMA table_info(onboarding_profiles)")
+        names = {row[1] for row in cursor.fetchall()}
+    except Exception:
+        return
+    if "scenario_answers_json" not in names:
+        database.execute_sql("ALTER TABLE onboarding_profiles ADD COLUMN scenario_answers_json TEXT")
+    if "recommendations_json" not in names:
+        database.execute_sql("ALTER TABLE onboarding_profiles ADD COLUMN recommendations_json TEXT")
+
+
 def _ensure_montrose_oauth_state_columns():
     """SQLite: add client_id / client_secret if DB predates dynamic client registration."""
     try:
@@ -43,6 +55,7 @@ def init_db(app):
     database.bind(_TABLES)
     database.connect()
     database.create_tables(_TABLES)
+    _ensure_onboarding_profile_columns()
     _ensure_montrose_oauth_state_columns()
 
     @app.teardown_appcontext

@@ -22,6 +22,7 @@ def _profile_to_dict(p: OnboardingProfile) -> dict:
         "expensive_loans": p.expensive_loans,
         "adjusted_risk_tolerance": p.adjusted_risk_tolerance,
         "monthly_contribution_sek": p.monthly_contribution_sek,
+        "scenario_answers_json": p.scenario_answers_json,
         "onboarding_completed": p.onboarding_completed,
         "current_step": p.current_step,
     }
@@ -55,11 +56,12 @@ def put_profile():
         "expensive_loans",
         "adjusted_risk_tolerance",
         "monthly_contribution_sek",
+        "scenario_answers_json",
         "onboarding_completed",
         "current_step",
     ]
-    # These two can be intentionally cleared to null by the user
-    explicitly_nullable = {"adjusted_risk_tolerance", "monthly_contribution_sek"}
+    # These can be intentionally cleared to null by the user
+    explicitly_nullable = {"adjusted_risk_tolerance", "monthly_contribution_sek", "scenario_answers_json"}
     for key in fields:
         if key in data:
             val = data[key]

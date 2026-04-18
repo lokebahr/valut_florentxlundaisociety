@@ -81,8 +81,10 @@ def _db_to_out(fund: FundFact, cached: bool = False) -> FundFactOut:
 
 @router.post("/parse", response_model=ParseResponse)
 async def parse_fund(file: UploadFile, session: Session = Depends(get_session)):
-    if file.content_type not in ("application/pdf", "application/octet-stream"):
-        raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
+    ct = (file.content_type or "").lower()
+    fname = (file.filename or "").lower()
+    if ct not in ("application/pdf", "application/octet-stream", "") and not fname.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail=f"Only PDF files are accepted (got content-type: {ct}).")
 
     pdf_bytes = await file.read()
 

@@ -16,7 +16,7 @@ cd fund-parser
 cp .env.example .env       # add your ANTHROPIC_API_KEY
 conda activate valut
 pip install -r requirements.txt
-uvicorn app.main:app --port 8001 --reload
+uvicorn app.main:app --port 8000 --reload
 ```
 
 ## Test interface
@@ -24,20 +24,20 @@ uvicorn app.main:app --port 8001 --reload
 Open in your browser:
 
 ```
-http://localhost:8001
+http://localhost:8000
 ```
 
 Drag and drop a PDF factsheet to parse it. Use the **Load funds from DB** button on the right to browse all stored funds grouped by type.
 
 ## API
 
-Base URL: `http://localhost:8001`
+Base URL: `http://localhost:8000`
 
 ### `POST /funds/parse`
 Upload a PDF factsheet. Returns parsed fund data. If the ISIN is already in the database the response is instant.
 
 ```bash
-curl -X POST http://localhost:8001/funds/parse \
+curl -X POST http://localhost:8000/funds/parse \
   -F "file=@ISIN_LU0058908533_sv_SE_last.pdf"
 ```
 
@@ -76,19 +76,19 @@ Response:
 List all stored funds.
 
 ```bash
-curl http://localhost:8001/funds/
+curl http://localhost:8000/funds/
 ```
 
 ### `GET /funds/{isin}`
 Fetch a single fund by ISIN.
 
 ```bash
-curl http://localhost:8001/funds/LU0058908533
+curl http://localhost:8000/funds/LU0058908533
 ```
 
 ### `GET /health`
 ```bash
-curl http://localhost:8001/health
+curl http://localhost:8000/health
 # {"status": "ok"}
 ```
 
