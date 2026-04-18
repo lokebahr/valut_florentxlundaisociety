@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
 import { Shell } from '../components/Shell'
+import imgVisual from '../../pictures/bild4.jpg'
 
 type TinkLinkInfo = { mode: 'mock' | 'tink'; url?: string }
 
@@ -39,51 +40,52 @@ export function Register() {
 
   return (
     <Shell variant="minimal">
-      <div className="page narrow">
-        <div className="surface step-animate stack">
-          <div>
-            <h2 style={{ marginBottom: '0.35rem' }}>Kom igång gratis</h2>
-            <p className="muted">Skapa ditt konto och få din första portföljanalys på under två minuter.</p>
+      <div className="page page--auth">
+        <div className="auth-grid">
+          <div className="auth-visual">
+            <img src={imgVisual} alt="" />
           </div>
+          <div className="auth-panel">
+            <div className="stack--tight">
+              <h1>Kom igång gratis</h1>
+              <p className="lead">Skapa ditt konto och få din första portföljanalys på under två minuter.</p>
+            </div>
 
-          {error && (
-            <p className="error" role="alert">
-              {error}
+            {error && <p className="error" role="alert">{error}</p>}
+
+            {tinkInfo?.mode === 'mock' && (
+              <div className="stack stack--tight">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleMockRegister}
+                  disabled={loading}
+                  style={{ width: '100%' }}
+                >
+                  {loading ? 'Skapar konto…' : 'Skapa demokonto'}
+                </button>
+                <p className="muted small" style={{ textAlign: 'center' }}>
+                  Appen körs i demoläge — inget riktigt bankkonto behövs.
+                </p>
+              </div>
+            )}
+
+            {tinkInfo?.mode === 'tink' && tinkInfo.url && (
+              <div className="stack stack--tight">
+                <a className="btn-link" href={tinkInfo.url} style={{ textAlign: 'center' }}>
+                  Kom igång med Tink
+                </a>
+                <p className="muted small" style={{ textAlign: 'center' }}>
+                  Vi kopplar till din bank via säker öppen bankkoppling för att läsa in dina innehav.
+                </p>
+              </div>
+            )}
+
+            <p className="muted small">
+              Har du redan ett konto?{' '}
+              <Link to="/login">Logga in</Link>
             </p>
-          )}
-
-          {tinkInfo?.mode === 'mock' && (
-            <div className="stack stack--tight">
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleMockRegister}
-                disabled={loading}
-                style={{ width: '100%' }}
-              >
-                {loading ? 'Skapar konto…' : 'Skapa demokonto'}
-              </button>
-              <p className="muted small" style={{ textAlign: 'center' }}>
-                Appen körs i demoläge — inget riktigt bankkonto behövs.
-              </p>
-            </div>
-          )}
-
-          {tinkInfo?.mode === 'tink' && tinkInfo.url && (
-            <div className="stack stack--tight">
-              <a className="btn-link" href={tinkInfo.url} style={{ textAlign: 'center' }}>
-                Kom igång med Tink
-              </a>
-              <p className="muted small" style={{ textAlign: 'center' }}>
-                Vi kopplar till din bank via säker öppen bankkoppling för att läsa in dina innehav.
-              </p>
-            </div>
-          )}
-
-          <p className="muted small" style={{ textAlign: 'center' }}>
-            Har du redan ett konto?{' '}
-            <Link to="/login">Logga in</Link>
-          </p>
+          </div>
         </div>
       </div>
     </Shell>
