@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
 import { HeroImage } from '../components/HeroImage'
@@ -317,54 +317,211 @@ export function Dashboard() {
           </div>
         )}
 
-        {tab === 'tracker' && (() => {
-          const totalValue = data.holdings.reduce((sum, h) => sum + Number(h.value_sek || 0), 0)
-          return (
-            <>
-              <div className="surface step-animate">
-                <h1 style={{ margin: '0 0 0.35rem' }}>Tracker</h1>
-                <p className="muted small" style={{ marginBottom: '1.25rem' }}>
-                  Dina nuvarande innehav och portföljsammansättning.
-                </p>
-                <div className="grid-metrics">
-                  <dl className="metric">
-                    <dt>Totalt värde</dt>
-                    <dd>{totalValue.toLocaleString('sv-SE')} kr</dd>
-                  </dl>
-                  <dl className="metric">
-                    <dt>Antal innehav</dt>
-                    <dd>{data.holdings.length}</dd>
-                  </dl>
-                </div>
-              </div>
-              <section className="surface step-animate">
-                <h2>Innehav</h2>
-                {data.holdings.length === 0 && <p className="muted">Inga innehav registrerade.</p>}
-                <div className="holdings">
-                  {data.holdings.map((h) => {
-                    const value = Number(h.value_sek || 0)
-                    const share = totalValue > 0 ? (value / totalValue) * 100 : 0
-                    return (
-                      <article key={String(h.id)} className="holding">
-                        <div className="holding__header">
-                          <h3>{String(h.name)}</h3>
-                          <span className="holding__value">{value.toLocaleString('sv-SE')} kr</span>
-                        </div>
-                        <div className="holding__bar-wrap">
-                          <div className="holding__bar" style={{ width: `${share}%` }} />
-                        </div>
-                        <p className="muted small">
-                          {share.toFixed(1)} % av portföljen · Avgift {String(h.ongoing_fee_pct)} % · {String(h.domicile)} · {String(h.vehicle)}
-                        </p>
-                      </article>
-                    )
-                  })}
-                </div>
-              </section>
-            </>
-          )
-        })()}
+        {tab === 'tracker' && <TrackerTab holdings={data.holdings} />}
       </div>
     </Shell>
+  )
+}
+
+// ── Goal Tracker ────────────────────────────────────────────────
+
+type GoalType = 'house' | 'car' | 'travel' | 'education' | 'retirement'
+
+type SavedGoal = { type: GoalType; targetSek: number }
+
+const GOALS: Record<GoalType, { label: string; svg: React.ReactNode }> = {
+  house: {
+    label: 'Bostad',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 10.5L12 3l9 7.5V21H15v-6H9v6H3V10.5z" />
+      </svg>
+    ),
+  },
+  car: {
+    label: 'Bil',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 12l2-5h10l2 5" />
+        <rect x="2" y="12" width="20" height="6" rx="2" />
+        <circle cx="7" cy="19" r="1.5" />
+        <circle cx="17" cy="19" r="1.5" />
+      </svg>
+    ),
+  },
+  travel: {
+    label: 'Resa',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 16.5L14 12V5a2 2 0 00-4 0v7L2 16.5l.5 1.5 7.5-2V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-3l7.5 2 1.5-1.5z" />
+      </svg>
+    ),
+  },
+  education: {
+    label: 'Utbildning',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3L2 8l10 5 10-5-10-5z" />
+        <path d="M2 8v7" />
+        <path d="M6 10.5v5.5a6 6 0 0012 0v-5.5" />
+      </svg>
+    ),
+  },
+  retirement: {
+    label: 'Pension',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+      </svg>
+    ),
+  },
+}
+
+function TrackerTab({ holdings }: { holdings: Record<string, unknown>[] }) {
+  const [goal, setGoal] = useState<SavedGoal | null>(() => {
+    try { return JSON.parse(localStorage.getItem('valut_goal') || 'null') }
+    catch { return null }
+  })
+  const [picking, setPicking] = useState(!goal)
+  const [selectedType, setSelectedType] = useState<GoalType>(goal?.type ?? 'house')
+  const [targetInput, setTargetInput] = useState(goal ? String(goal.targetSek) : '')
+  const fillRef = useRef<HTMLDivElement>(null)
+
+  const totalValue = holdings.reduce((sum, h) => sum + Number(h.value_sek || 0), 0)
+  const pct = goal && goal.targetSek > 0 ? Math.min((totalValue / goal.targetSek) * 100, 100) : 0
+  const reached = pct >= 100
+
+  useEffect(() => {
+    const el = fillRef.current
+    if (!el) return
+    requestAnimationFrame(() => {
+      el.style.width = `${pct}%`
+    })
+  }, [pct])
+
+  function saveGoal() {
+    const t = Number(targetInput.replace(/\s/g, '').replace(',', '.'))
+    if (!t || t <= 0) return
+    const saved: SavedGoal = { type: selectedType, targetSek: t }
+    localStorage.setItem('valut_goal', JSON.stringify(saved))
+    setGoal(saved)
+    setPicking(false)
+  }
+
+  const def = GOALS[goal?.type ?? selectedType]
+
+  if (picking) {
+    return (
+      <div className="surface step-animate">
+        <h1 style={{ margin: '0 0 0.35rem' }}>Välj ditt mål</h1>
+        <p className="muted small">Vad sparar du mot? Vi visar hur nära du är.</p>
+        <div className="goal-picker">
+          {(Object.keys(GOALS) as GoalType[]).map((k) => (
+            <button
+              key={k}
+              type="button"
+              className={`goal-option${selectedType === k ? ' goal-option--selected' : ''}`}
+              onClick={() => setSelectedType(k)}
+            >
+              {GOALS[k].svg}
+              {GOALS[k].label}
+            </button>
+          ))}
+        </div>
+        <div className="goal-setup-row">
+          <label className="goal-setup-label">
+            Målbelopp (kr)
+            <input
+              type="number"
+              min="1000"
+              step="10000"
+              placeholder="t.ex. 3 000 000"
+              value={targetInput}
+              onChange={(e) => setTargetInput(e.target.value)}
+              className="goal-setup-input"
+            />
+          </label>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={!targetInput || Number(targetInput) <= 0}
+            onClick={saveGoal}
+          >
+            Spara mål
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <div className="surface step-animate">
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h1 style={{ margin: '0 0 0.2rem' }}>Tracker</h1>
+            <p className="muted small">Mål: <strong>{def.label}</strong> · {goal!.targetSek.toLocaleString('sv-SE')} kr</p>
+          </div>
+          <button type="button" className="btn-ghost" onClick={() => setPicking(true)}>Byt mål</button>
+        </div>
+
+        <div className="goal-progress">
+          <div className="goal-progress__pct-row">
+            <span className="goal-progress__pct">{Math.floor(pct)} %</span>
+            {reached && <span className="goal-progress__reached">Målet nått!</span>}
+          </div>
+
+          <div className="goal-progress__track-wrap">
+            <div className="goal-progress__track">
+              <div
+                ref={fillRef}
+                className={`goal-progress__fill${reached ? ' goal-progress__fill--done' : ''}`}
+                style={{ width: '0%' }}
+              />
+            </div>
+            <div className={`goal-progress__icon${reached ? ' goal-progress__icon--reached' : ''}`}>
+              {def.svg}
+            </div>
+          </div>
+
+          <div className="goal-progress__labels">
+            <div>
+              <div className="goal-progress__label-val">{totalValue.toLocaleString('sv-SE')} kr</div>
+              <div className="goal-progress__label-sub muted small">Nuvarande portfölj</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div className="goal-progress__label-val">{goal!.targetSek.toLocaleString('sv-SE')} kr</div>
+              <div className="goal-progress__label-sub muted small">{def.label}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section className="surface step-animate">
+        <h2>Innehav</h2>
+        {holdings.length === 0 && <p className="muted">Inga innehav registrerade.</p>}
+        <div className="holdings">
+          {holdings.map((h) => {
+            const value = Number(h.value_sek || 0)
+            const share = totalValue > 0 ? (value / totalValue) * 100 : 0
+            return (
+              <article key={String(h.id)} className="holding">
+                <div className="holding__header">
+                  <h3>{String(h.name)}</h3>
+                  <span className="holding__value">{value.toLocaleString('sv-SE')} kr</span>
+                </div>
+                <div className="holding__bar-wrap">
+                  <div className="holding__bar" style={{ width: `${share}%` }} />
+                </div>
+                <p className="muted small">
+                  {share.toFixed(1)} % av portföljen · Avgift {String(h.ongoing_fee_pct)} % · {String(h.domicile)} · {String(h.vehicle)}
+                </p>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+    </>
   )
 }
