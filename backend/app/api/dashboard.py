@@ -32,20 +32,15 @@ def overview():
     payload = json.loads(snap.normalized_json)
     holdings = payload.get("holdings") or []
     buffer = payload.get("buffer")
-    analysis = payload.get("analysis")
     eff_risk = profile.adjusted_risk_tolerance or profile.risk_tolerance
-    if not analysis:
-        analysis = analyze_holdings(
-            {
-                "risk_tolerance": eff_risk,
-                "time_horizon_years": profile.time_horizon_years,
-                "savings_purpose": profile.savings_purpose,
-            },
-            holdings,
-        )
-        payload["analysis"] = analysis
-        snap.normalized_json = json.dumps(payload, ensure_ascii=False)
-        snap.save()
+    analysis = analyze_holdings(
+        {
+            "risk_tolerance": eff_risk,
+            "time_horizon_years": profile.time_horizon_years,
+            "savings_purpose": profile.savings_purpose,
+        },
+        holdings,
+    )
 
     alerts = build_rebalance_alerts(analysis)
     montrose_row = MontroseConnection.get_or_none(MontroseConnection.user == user)

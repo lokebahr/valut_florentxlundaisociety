@@ -58,12 +58,19 @@ def put_profile():
         "onboarding_completed",
         "current_step",
     ]
+    # These two can be intentionally cleared to null by the user
+    explicitly_nullable = {"adjusted_risk_tolerance", "monthly_contribution_sek"}
     for key in fields:
         if key in data:
-            setattr(profile, key, data[key])
+            val = data[key]
+            if val is not None or key in explicitly_nullable:
+                setattr(profile, key, val)
     profile.updated_at = datetime.utcnow()
     profile.save()
-    return jsonify({"profile": _profile_to_dict(profile)})
+    saved = _profile_to_dict(profile)
+    print(f"[put_profile] received={data}")
+    print(f"[put_profile] saved={saved}")
+    return jsonify({"profile": saved})
 
 
 @bp.get("/mission")

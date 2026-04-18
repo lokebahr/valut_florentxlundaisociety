@@ -314,10 +314,10 @@ export function Onboarding() {
   const [riskTolerance, setRiskTolerance] = useState(3)
   const [timeHorizonYears, setTimeHorizonYears] = useState(10)
   const [savingsPurpose, setSavingsPurpose] = useState('pension')
-  const [dependentsCount, setDependentsCount] = useState(0)
-  const [salaryMonthlySek, setSalaryMonthlySek] = useState(45_000)
-  const [age, setAge] = useState(35)
-  const [disposableIncomeMonthlySek, setDisposableIncomeMonthlySek] = useState(8_000)
+  const [dependentsCount, setDependentsCount] = useState<number | null>(null)
+  const [salaryMonthlySek, setSalaryMonthlySek] = useState<number | null>(null)
+  const [age, setAge] = useState<number | null>(null)
+  const [disposableIncomeMonthlySek, setDisposableIncomeMonthlySek] = useState<number | null>(null)
   const [expensiveLoans, setExpensiveLoans] = useState(false)
   const [adjustedRisk, setAdjustedRisk] = useState<number | null>(null)
   const [monthlyContributionSek, setMonthlyContributionSek] = useState<number | null>(null)
@@ -325,9 +325,41 @@ export function Onboarding() {
   const [connectData, setConnectData] = useState<ConnectPayload | null>(null)
   const [orderFrom, setOrderFrom] = useState('Nordea Global Climate Impact')
   const [orderTo, setOrderTo] = useState('Länsförsäkringar Global Indexnära')
-  const [orderAmount, setOrderAmount] = useState(50_000)
+  const [orderAmount, setOrderAmount] = useState<number | null>(50_000)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [touched, setTouched] = useState<Set<string>>(new Set())
+  const touch = (name: string) => setTouched((prev) => new Set([...prev, name]))
   const [error, setError] = useState<string | null>(null)
   const [tinkDebug, setTinkDebug] = useState<unknown>(null)
+
+  useEffect(() => {
+    api<{ profile: {
+      risk_tolerance: number | null
+      time_horizon_years: number | null
+      savings_purpose: string | null
+      dependents_count: number | null
+      salary_monthly_sek: number | null
+      age: number | null
+      disposable_income_monthly_sek: number | null
+      expensive_loans: boolean | null
+      adjusted_risk_tolerance: number | null
+      monthly_contribution_sek: number | null
+    }}>('/api/onboarding/profile')
+      .then(({ profile: p }) => {
+        if (p.risk_tolerance != null) setRiskTolerance(p.risk_tolerance)
+        if (p.time_horizon_years != null) setTimeHorizonYears(p.time_horizon_years)
+        if (p.savings_purpose != null) setSavingsPurpose(p.savings_purpose)
+        if (p.dependents_count != null) setDependentsCount(p.dependents_count)
+        if (p.age != null) setAge(p.age)
+        if (p.salary_monthly_sek != null) setSalaryMonthlySek(p.salary_monthly_sek)
+        if (p.disposable_income_monthly_sek != null) setDisposableIncomeMonthlySek(p.disposable_income_monthly_sek)
+        if (p.expensive_loans != null) setExpensiveLoans(p.expensive_loans)
+        setAdjustedRisk(p.adjusted_risk_tolerance)
+        if (p.monthly_contribution_sek != null) setMonthlyContributionSek(p.monthly_contribution_sek)
+      })
+      .catch(() => {})
+      .finally(() => setProfileLoading(false))
+  }, [])
 
   useEffect(() => {
     if (search.get('tink') !== 'connected') return
@@ -405,29 +437,41 @@ export function Onboarding() {
       monthly_contribution_sek: monthlyContributionSek,
       current_step: step,
     }),
-    [
-      age,
-      dependentsCount,
-      disposableIncomeMonthlySek,
-      expensiveLoans,
-      monthlyContributionSek,
-      adjustedRisk,
-      riskTolerance,
-      salaryMonthlySek,
-      savingsPurpose,
-      step,
-      timeHorizonYears,
-    ],
+    [age, dependentsCount, disposableIncomeMonthlySek, expensiveLoans, monthlyContributionSek, adjustedRisk, riskTolerance, salaryMonthlySek, savingsPurpose, step, timeHorizonYears],
   )
 
   async function persistProfile(extra?: Record<string, unknown>) {
-    await api('/api/onboarding/profile', {
+    const body = { ...profilePayload, ...extra }
+    console.log('[Onboarding] saving step', step, body)
+    const result = await api<{ profile: Record<string, unknown> }>('/api/onboarding/profile', {
       method: 'PUT',
-      body: { ...profilePayload, ...extra },
+      body,
     })
+    console.log('[Onboarding] saved, DB now has:', result.profile)
+  }
+
+  function requiredForStep(s: number): string[] {
+    if (s === 2) return ['dependentsCount']
+    if (s === 3) return ['age', 'salaryMonthlySek', 'disposableIncomeMonthlySek']
+    return []
+  }
+
+  function back() {
+    setStep((s) => Math.max(0, s - 1))
   }
 
   async function next() {
+    const missing = requiredForStep(step).filter((field) => {
+      if (field === 'dependentsCount') return dependentsCount === null
+      if (field === 'age') return age === null
+      if (field === 'salaryMonthlySek') return salaryMonthlySek === null
+      if (field === 'disposableIncomeMonthlySek') return disposableIncomeMonthlySek === null
+      return false
+    })
+    if (missing.length > 0) {
+      setTouched((prev) => new Set([...prev, ...missing]))
+      return
+    }
     setError(null)
     try {
       await persistProfile()
@@ -440,7 +484,6 @@ export function Onboarding() {
   async function connectMock() {
     setError(null)
     try {
-      await persistProfile()
       const res = await api<ConnectPayload>('/api/tink/connect-mock', { method: 'POST' })
       setConnectData(res)
       setStep(5)
@@ -453,7 +496,7 @@ export function Onboarding() {
     e.preventDefault()
     setError(null)
     try {
-      await persistProfile({ onboarding_completed: true, current_step: step })
+      await persistProfile({ onboarding_completed: true })
       navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kunde inte slutföra.')
@@ -462,6 +505,10 @@ export function Onboarding() {
 
   async function submitOrder(e: FormEvent) {
     e.preventDefault()
+    if (orderAmount === null) {
+      setTouched((prev) => new Set([...prev, 'orderAmount']))
+      return
+    }
     setError(null)
     try {
       await api('/api/dashboard/orders', {
@@ -472,6 +519,16 @@ export function Onboarding() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ordern kunde inte läggas.')
     }
+  }
+
+  if (profileLoading) {
+    return (
+      <Shell>
+        <div className="page narrow">
+          <p className="muted">Laddar…</p>
+        </div>
+      </Shell>
+    )
   }
 
   return (
@@ -545,9 +602,10 @@ export function Onboarding() {
                 </button>
               ))}
             </div>
-            <button type="button" className="btn-primary" onClick={next}>
-              Nästa
-            </button>
+            <div className="step-nav">
+              <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
+              <button type="button" className="btn-primary" onClick={next}>Nästa</button>
+            </div>
           </section>
         )}
 
@@ -578,15 +636,20 @@ export function Onboarding() {
               <input
                 type="number"
                 min={0}
-                value={dependentsCount}
-                onChange={(e) => setDependentsCount(Number(e.target.value))}
+                value={dependentsCount ?? ''}
+                onChange={(e) => setDependentsCount(e.target.value === '' ? null : Number(e.target.value))}
+                onBlur={() => touch('dependentsCount')}
               />
+              {touched.has('dependentsCount') && dependentsCount === null && (
+                <span className="field-error">Ange ett värde</span>
+              )}
               <span className="field-hint">Partner, barn eller andra du försörjer ekonomiskt</span>
             </label>
             <ProfileCard profile={baseProfile} horizon={timeHorizonYears} purpose={savingsPurpose} />
-            <button type="button" className="btn-primary" onClick={next}>
-              Nästa
-            </button>
+            <div className="step-nav">
+              <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
+              <button type="button" className="btn-primary" onClick={next}>Nästa</button>
+            </div>
           </section>
         )}
 
@@ -601,7 +664,17 @@ export function Onboarding() {
             </div>
             <label>
               Ålder
-              <input type="number" min={18} max={100} value={age} onChange={(e) => setAge(Number(e.target.value))} />
+              <input
+                type="number"
+                min={18}
+                max={100}
+                value={age ?? ''}
+                onChange={(e) => setAge(e.target.value === '' ? null : Number(e.target.value))}
+                onBlur={() => touch('age')}
+              />
+              {touched.has('age') && age === null && (
+                <span className="field-error">Ange ett värde</span>
+              )}
               <span className="field-hint">Påverkar hur lång aktiv sparhorisont du har kvar till pension</span>
             </label>
             <label>
@@ -609,9 +682,13 @@ export function Onboarding() {
               <input
                 type="number"
                 min={0}
-                value={salaryMonthlySek}
-                onChange={(e) => setSalaryMonthlySek(Number(e.target.value))}
+                value={salaryMonthlySek ?? ''}
+                onChange={(e) => setSalaryMonthlySek(e.target.value === '' ? null : Number(e.target.value))}
+                onBlur={() => touch('salaryMonthlySek')}
               />
+              {touched.has('salaryMonthlySek') && salaryMonthlySek === null && (
+                <span className="field-error">Ange ett värde</span>
+              )}
               <span className="field-hint">Används för att bedöma skatteeffekter och totalt sparutrymme</span>
             </label>
             <label>
@@ -619,9 +696,13 @@ export function Onboarding() {
               <input
                 type="number"
                 min={0}
-                value={disposableIncomeMonthlySek}
-                onChange={(e) => setDisposableIncomeMonthlySek(Number(e.target.value))}
+                value={disposableIncomeMonthlySek ?? ''}
+                onChange={(e) => setDisposableIncomeMonthlySek(e.target.value === '' ? null : Number(e.target.value))}
+                onBlur={() => touch('disposableIncomeMonthlySek')}
               />
+              {touched.has('disposableIncomeMonthlySek') && disposableIncomeMonthlySek === null && (
+                <span className="field-error">Ange ett värde</span>
+              )}
               <span className="field-hint">
                 Det du har kvar när räkningar och levnadskostnader är betalda — din sparpotential
               </span>
@@ -640,9 +721,10 @@ export function Onboarding() {
                 </span>
               </span>
             </label>
-            <button type="button" className="btn-primary" onClick={next}>
-              Nästa
-            </button>
+            <div className="step-nav">
+              <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
+              <button type="button" className="btn-primary" onClick={next}>Nästa</button>
+            </div>
           </section>
         )}
 
@@ -679,9 +761,7 @@ export function Onboarding() {
                 )}
               </div>
             )}
-            <button type="button" className="btn-ghost" onClick={next}>
-              Hoppa över
-            </button>
+            <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
           </section>
         )}
 
@@ -728,9 +808,10 @@ export function Onboarding() {
                 </li>
               ))}
             </ul>
-            <button type="button" className="btn-primary" onClick={() => setStep(6)}>
-              Nästa
-            </button>
+            <div className="step-nav">
+              <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
+              <button type="button" className="btn-primary" onClick={() => setStep(6)}>Nästa</button>
+            </div>
           </section>
         )}
 
@@ -766,9 +847,10 @@ export function Onboarding() {
                 </li>
               ))}
             </ul>
-            <button type="button" className="btn-primary" onClick={() => setStep(7)}>
-              Nästa
-            </button>
+            <div className="step-nav">
+              <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
+              <button type="button" className="btn-primary" onClick={() => setStep(7)}>Nästa</button>
+            </div>
           </section>
         )}
 
@@ -831,9 +913,10 @@ export function Onboarding() {
               </ul>
             </div>
 
-            <button type="button" className="btn-primary" onClick={next}>
-              Gå vidare till order
-            </button>
+            <div className="step-nav">
+              <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
+              <button type="button" className="btn-primary" onClick={next}>Gå vidare till order</button>
+            </div>
           </section>
         )}
 
@@ -858,13 +941,18 @@ export function Onboarding() {
                 <input
                   type="number"
                   min={1000}
-                  value={orderAmount}
-                  onChange={(e) => setOrderAmount(Number(e.target.value))}
+                  value={orderAmount ?? ''}
+                  onChange={(e) => setOrderAmount(e.target.value === '' ? null : Number(e.target.value))}
+                  onBlur={() => touch('orderAmount')}
                 />
+                {touched.has('orderAmount') && orderAmount === null && (
+                  <span className="field-error">Ange ett belopp</span>
+                )}
               </label>
-              <button type="submit" className="btn-primary">
-                Lägg order (övning)
-              </button>
+              <div className="step-nav">
+                <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
+                <button type="submit" className="btn-primary">Lägg order (övning)</button>
+              </div>
             </form>
           </section>
         )}

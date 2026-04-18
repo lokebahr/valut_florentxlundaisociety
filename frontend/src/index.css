@@ -1303,6 +1303,21 @@ ul.plain li {
   color: var(--muted);
 }
 
+.field-error {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #c0392b;
+}
+
+.step-nav {
+  display: flex;
+  gap: 0.75rem;
+}
+.step-nav .btn-primary,
+.step-nav .btn-ghost {
+  flex: 1;
+}
+
 /* Compact risk selector (5 cards, no chart inside) */
 .risk-selector {
   display: grid;
