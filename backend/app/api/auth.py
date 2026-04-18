@@ -101,12 +101,22 @@ def sign_in_with_tink():
         "token_payload": token_payload,
     }
     profile_json = json.dumps(tink_profile, ensure_ascii=False)
-    user, created = User.get_or_create(tink_user_id=str(tink_uid), defaults={"tink_profile_json": profile_json})
-    if not created:
+
+    # If the user is already logged in, reuse their account so onboarding
+    # data entered before the Tink redirect is preserved.
+    existing_user = current_user()
+    if existing_user:
+        user = existing_user
         user.tink_profile_json = profile_json
         user.save()
-
-    OnboardingProfile.get_or_create(user=user, defaults={})
+    else:
+        user, created = User.get_or_create(
+            tink_user_id=str(tink_uid), defaults={"tink_profile_json": profile_json}
+        )
+        if not created:
+            user.tink_profile_json = profile_json
+            user.save()
+        OnboardingProfile.get_or_create(user=user, defaults={})
 
     try:
         portfolio = sync_portfolio_for_user(user, client, token_payload, access_token, credentials_id)
