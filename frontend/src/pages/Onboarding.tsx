@@ -512,6 +512,8 @@ export function Onboarding() {
   const [agentResult, setAgentResult] = useState<AgentResult | null>(null)
   const [agentLoading, setAgentLoading] = useState(false)
 
+  useEffect(() => { window.scrollTo(0, 0) }, [step])
+
   useEffect(() => {
     api<{ profile: {
       risk_tolerance: number | null

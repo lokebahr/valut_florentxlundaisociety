@@ -47,7 +47,7 @@ On the backend, `app/api/deps.py::current_user()` decodes the JWT and returns th
 Steps 1–2 collect the investor profile (risk cards, horizon, purpose, finances). Steps 3–6 connect the bank and surface analysis. Step 7 is a fund-swap exercise. All state is accumulated in React and flushed to the backend via `persistProfile()` on each `next()` call.
 
 ### Database
-SQLite via Peewee ORM. Tables are created automatically on startup (`app/database.py`). There are no migration scripts — schema changes require dropping and recreating `valut.db`.
+SQLite via Peewee ORM. Tables are created automatically on startup (`app/database.py`). There are no migration scripts — schema changes require dropping and recreating `valut.db`. Do not push the db.
 
 ### Mock vs. real Tink
 `TINK_USE_MOCK=true` causes `/api/tink/link` to return `{mode:"mock"}` and `/api/tink/connect-mock` to synthesise two mock ISK holdings (Europe Small Cap Class A-sek LU1916064857 + Franklin Sustainable Global Growth Fund LU0390134368) with realistic metadata. The real Tink path requires `TINK_CLIENT_ID` + `TINK_CLIENT_SECRET` and uses the Tink Link OAuth2 flow with a redirect to `/onboarding/bank-callback`.
