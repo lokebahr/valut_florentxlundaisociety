@@ -1,3 +1,5 @@
+import imgBild6 from '../../pictures/bild6.jpg'
+
 /** Nordiska, lugna motiv — Unsplash (fri användning). */
 export const images = {
   heroLandscape:
@@ -6,8 +8,7 @@ export const images = {
     'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?auto=format&fit=crop&w=1600&q=82',
   forestLight:
     'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1800&q=82',
-  seaCalm:
-    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=82',
+  seaCalm: imgBild6,
   deskMinimal:
     'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1600&q=82',
 } as const
@@ -16,6 +17,6 @@ export const imageAlt = {
   heroLandscape: 'Ljust nordiskt landskap med berg och moln',
   interior: 'Ljust skandinaviskt rum med trä och textil',
   forestLight: 'Skog med solljus mellan träden',
-  seaCalm: 'Lugn kust med klart vatten',
+  seaCalm: 'Löpare i rörelse genom skogen',
   deskMinimal: 'Enkel arbetsyta med papper och penna',
 } as const
