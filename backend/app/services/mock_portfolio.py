@@ -50,6 +50,7 @@ def mock_normalized_holdings() -> list[dict[str, Any]]:
         {
             "id": "h1",
             "account_id": "acc-isk-1",
+            "isin": "LU2145461757",
             "name": "Nordea Global Climate Impact",
             "vehicle": "ISK",
             "domicile": "LU",
@@ -66,6 +67,7 @@ def mock_normalized_holdings() -> list[dict[str, Any]]:
         {
             "id": "h2",
             "account_id": "acc-isk-2",
+            "isin": "SE0026876799",
             "name": "SEB Sverige Indexfond",
             "vehicle": "ISK",
             "domicile": "SE",

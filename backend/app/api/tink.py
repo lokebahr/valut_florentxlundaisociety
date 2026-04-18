@@ -8,6 +8,7 @@ from flask import Blueprint, jsonify, request
 from app.api.deps import current_user
 from app.config import Config
 from app.models import BankConnection, OnboardingProfile, PortfolioSnapshot, User
+from app.services.fund_enrichment import enrich_holdings
 from app.services.holdings_service_client import HoldingsServiceError, fetch_tink_shaped_accounts
 from app.services.normalize import normalize_holdings
 from app.services.portfolio_analysis import (
@@ -178,7 +179,7 @@ def connect_mock():
             accounts = fetch_tink_shaped_accounts(user_id=user.id)
         except HoldingsServiceError as exc:
             return jsonify({"error": "Holdings-tjänsten svarade inte.", "detail": str(exc)}), 502
-        holdings = normalize_holdings(accounts, use_mock_enrichment=False)
+        holdings = normalize_holdings(accounts, use_mock_enrichment=True)
         liquid = sum_liquid_sek_from_accounts(accounts)
         profile = _profile_dict(user)
         buffer = analyze_buffer(profile.get("disposable_income_monthly_sek"), liquid)
@@ -267,6 +268,50 @@ def link_info():
             "redirect_uri": Config.TINK_REDIRECT_URI,
         }
     )
+
+
+@bp.post("/enrich-holdings")
+def enrich_holdings_endpoint():
+    """Enrich the latest snapshot's holdings by sending each ISIN through the fund-parser."""
+    from app.services.mock_portfolio import mock_normalized_holdings
+
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Ogiltig behörighet."}), 401
+
+    snap = (
+        PortfolioSnapshot.select()
+        .where(PortfolioSnapshot.user == user)
+        .order_by(PortfolioSnapshot.created_at.desc())
+        .first()
+    )
+    if not snap:
+        return jsonify({"error": "Ingen portfölj ännu."}), 404
+
+    payload = json.loads(snap.normalized_json)
+    snapshot_holdings = payload.get("holdings") or []
+
+    has_isins = any(h.get("isin") for h in snapshot_holdings)
+    if not has_isins:
+        base = mock_normalized_holdings()
+        for i, h in enumerate(base):
+            if i < len(snapshot_holdings):
+                h["value_sek"] = snapshot_holdings[i].get("value_sek", h["value_sek"])
+        snapshot_holdings = base
+
+    holdings = enrich_holdings(snapshot_holdings)
+    payload["holdings"] = holdings
+
+    profile = _profile_dict(user)
+    payload["analysis"] = analyze_holdings(profile, holdings)
+
+    snap.normalized_json = json.dumps(payload, ensure_ascii=False)
+    snap.save()
+
+    return jsonify({
+        "holdings": holdings,
+        "analysis": payload["analysis"],
+    })
 
 
 @bp.get("/snapshot")

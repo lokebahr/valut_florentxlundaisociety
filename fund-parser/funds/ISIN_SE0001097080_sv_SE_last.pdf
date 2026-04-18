@@ -1,0 +1,485 @@
+ <!DOCTYPE HTML>
+<html lang="sv-SE">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width">
+<title>Hittar inte sidan - Excalibur Fonder</title>
+<!--[if lt IE 9]>
+	 <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
+	 <script src="//cdnjs.cloudflare.com/ajax/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+<link rel="icon" type="image/x-icon" href="https://excaliburfonder.se/wp-content/themes/excalfond/images/favicon.ico" />
+<script src="https://use.typekit.net/rtb8njq.js"></script>
+<script>try{Typekit.load({ async: true });}catch(e){}</script>
+<meta name='robots' content='noindex, follow' />
+
+	<!-- This site is optimized with the Yoast SEO plugin v25.6 - https://yoast.com/wordpress/plugins/seo/ -->
+	<meta property="og:locale" content="sv_SE" />
+	<meta property="og:title" content="Hittar inte sidan - Excalibur Fonder" />
+	<meta property="og:site_name" content="Excalibur Fonder" />
+	<script type="application/ld+json" class="yoast-schema-graph">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://excaliburfonder.se/#website","url":"https://excaliburfonder.se/","name":"Excalibur Fonder","description":"","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://excaliburfonder.se/?s={search_term_string}"},"query-input":{"@type":"PropertyValueSpecification","valueRequired":true,"valueName":"search_term_string"}}],"inLanguage":"sv-SE"}]}</script>
+	<!-- / Yoast SEO plugin. -->
+
+
+<link rel='dns-prefetch' href='//maxcdn.bootstrapcdn.com' />
+<link href='https://fonts.gstatic.com' crossorigin rel='preconnect' />
+<style id='wp-emoji-styles-inline-css' type='text/css'>
+
+	img.wp-smiley, img.emoji {
+		display: inline !important;
+		border: none !important;
+		box-shadow: none !important;
+		height: 1em !important;
+		width: 1em !important;
+		margin: 0 0.07em !important;
+		vertical-align: -0.1em !important;
+		background: none !important;
+		padding: 0 !important;
+	}
+</style>
+<link rel='stylesheet' id='wp-block-library-css' href='https://excaliburfonder.se/wp-includes/css/dist/block-library/style.min.css?ver=6.6.4' type='text/css' media='all' />
+<style id='classic-theme-styles-inline-css' type='text/css'>
+/*! This file is auto-generated */
+.wp-block-button__link{color:#fff;background-color:#32373c;border-radius:9999px;box-shadow:none;text-decoration:none;padding:calc(.667em + 2px) calc(1.333em + 2px);font-size:1.125em}.wp-block-file__button{background:#32373c;color:#fff;text-decoration:none}
+</style>
+<style id='global-styles-inline-css' type='text/css'>
+:root{--wp--preset--aspect-ratio--square: 1;--wp--preset--aspect-ratio--4-3: 4/3;--wp--preset--aspect-ratio--3-4: 3/4;--wp--preset--aspect-ratio--3-2: 3/2;--wp--preset--aspect-ratio--2-3: 2/3;--wp--preset--aspect-ratio--16-9: 16/9;--wp--preset--aspect-ratio--9-16: 9/16;--wp--preset--color--black: #000000;--wp--preset--color--cyan-bluish-gray: #abb8c3;--wp--preset--color--white: #ffffff;--wp--preset--color--pale-pink: #f78da7;--wp--preset--color--vivid-red: #cf2e2e;--wp--preset--color--luminous-vivid-orange: #ff6900;--wp--preset--color--luminous-vivid-amber: #fcb900;--wp--preset--color--light-green-cyan: #7bdcb5;--wp--preset--color--vivid-green-cyan: #00d084;--wp--preset--color--pale-cyan-blue: #8ed1fc;--wp--preset--color--vivid-cyan-blue: #0693e3;--wp--preset--color--vivid-purple: #9b51e0;--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple: linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%);--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan: linear-gradient(135deg,rgb(122,220,180) 0%,rgb(0,208,130) 100%);--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange: linear-gradient(135deg,rgba(252,185,0,1) 0%,rgba(255,105,0,1) 100%);--wp--preset--gradient--luminous-vivid-orange-to-vivid-red: linear-gradient(135deg,rgba(255,105,0,1) 0%,rgb(207,46,46) 100%);--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray: linear-gradient(135deg,rgb(238,238,238) 0%,rgb(169,184,195) 100%);--wp--preset--gradient--cool-to-warm-spectrum: linear-gradient(135deg,rgb(74,234,220) 0%,rgb(151,120,209) 20%,rgb(207,42,186) 40%,rgb(238,44,130) 60%,rgb(251,105,98) 80%,rgb(254,248,76) 100%);--wp--preset--gradient--blush-light-purple: linear-gradient(135deg,rgb(255,206,236) 0%,rgb(152,150,240) 100%);--wp--preset--gradient--blush-bordeaux: linear-gradient(135deg,rgb(254,205,165) 0%,rgb(254,45,45) 50%,rgb(107,0,62) 100%);--wp--preset--gradient--luminous-dusk: linear-gradient(135deg,rgb(255,203,112) 0%,rgb(199,81,192) 50%,rgb(65,88,208) 100%);--wp--preset--gradient--pale-ocean: linear-gradient(135deg,rgb(255,245,203) 0%,rgb(182,227,212) 50%,rgb(51,167,181) 100%);--wp--preset--gradient--electric-grass: linear-gradient(135deg,rgb(202,248,128) 0%,rgb(113,206,126) 100%);--wp--preset--gradient--midnight: linear-gradient(135deg,rgb(2,3,129) 0%,rgb(40,116,252) 100%);--wp--preset--font-size--small: 13px;--wp--preset--font-size--medium: 20px;--wp--preset--font-size--large: 36px;--wp--preset--font-size--x-large: 42px;--wp--preset--spacing--20: 0.44rem;--wp--preset--spacing--30: 0.67rem;--wp--preset--spacing--40: 1rem;--wp--preset--spacing--50: 1.5rem;--wp--preset--spacing--60: 2.25rem;--wp--preset--spacing--70: 3.38rem;--wp--preset--spacing--80: 5.06rem;--wp--preset--shadow--natural: 6px 6px 9px rgba(0, 0, 0, 0.2);--wp--preset--shadow--deep: 12px 12px 50px rgba(0, 0, 0, 0.4);--wp--preset--shadow--sharp: 6px 6px 0px rgba(0, 0, 0, 0.2);--wp--preset--shadow--outlined: 6px 6px 0px -3px rgba(255, 255, 255, 1), 6px 6px rgba(0, 0, 0, 1);--wp--preset--shadow--crisp: 6px 6px 0px rgba(0, 0, 0, 1);}:where(.is-layout-flex){gap: 0.5em;}:where(.is-layout-grid){gap: 0.5em;}body .is-layout-flex{display: flex;}.is-layout-flex{flex-wrap: wrap;align-items: center;}.is-layout-flex > :is(*, div){margin: 0;}body .is-layout-grid{display: grid;}.is-layout-grid > :is(*, div){margin: 0;}:where(.wp-block-columns.is-layout-flex){gap: 2em;}:where(.wp-block-columns.is-layout-grid){gap: 2em;}:where(.wp-block-post-template.is-layout-flex){gap: 1.25em;}:where(.wp-block-post-template.is-layout-grid){gap: 1.25em;}.has-black-color{color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-color{color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-color{color: var(--wp--preset--color--white) !important;}.has-pale-pink-color{color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-color{color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-color{color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-color{color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-color{color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-color{color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-color{color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-color{color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-color{color: var(--wp--preset--color--vivid-purple) !important;}.has-black-background-color{background-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-background-color{background-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-background-color{background-color: var(--wp--preset--color--white) !important;}.has-pale-pink-background-color{background-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-background-color{background-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-background-color{background-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-background-color{background-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-background-color{background-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-background-color{background-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-background-color{background-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-background-color{background-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-background-color{background-color: var(--wp--preset--color--vivid-purple) !important;}.has-black-border-color{border-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-border-color{border-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-border-color{border-color: var(--wp--preset--color--white) !important;}.has-pale-pink-border-color{border-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-border-color{border-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-border-color{border-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-border-color{border-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-border-color{border-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-border-color{border-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-border-color{border-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-border-color{border-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-border-color{border-color: var(--wp--preset--color--vivid-purple) !important;}.has-vivid-cyan-blue-to-vivid-purple-gradient-background{background: var(--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple) !important;}.has-light-green-cyan-to-vivid-green-cyan-gradient-background{background: var(--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan) !important;}.has-luminous-vivid-amber-to-luminous-vivid-orange-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange) !important;}.has-luminous-vivid-orange-to-vivid-red-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-orange-to-vivid-red) !important;}.has-very-light-gray-to-cyan-bluish-gray-gradient-background{background: var(--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray) !important;}.has-cool-to-warm-spectrum-gradient-background{background: var(--wp--preset--gradient--cool-to-warm-spectrum) !important;}.has-blush-light-purple-gradient-background{background: var(--wp--preset--gradient--blush-light-purple) !important;}.has-blush-bordeaux-gradient-background{background: var(--wp--preset--gradient--blush-bordeaux) !important;}.has-luminous-dusk-gradient-background{background: var(--wp--preset--gradient--luminous-dusk) !important;}.has-pale-ocean-gradient-background{background: var(--wp--preset--gradient--pale-ocean) !important;}.has-electric-grass-gradient-background{background: var(--wp--preset--gradient--electric-grass) !important;}.has-midnight-gradient-background{background: var(--wp--preset--gradient--midnight) !important;}.has-small-font-size{font-size: var(--wp--preset--font-size--small) !important;}.has-medium-font-size{font-size: var(--wp--preset--font-size--medium) !important;}.has-large-font-size{font-size: var(--wp--preset--font-size--large) !important;}.has-x-large-font-size{font-size: var(--wp--preset--font-size--x-large) !important;}
+:where(.wp-block-post-template.is-layout-flex){gap: 1.25em;}:where(.wp-block-post-template.is-layout-grid){gap: 1.25em;}
+:where(.wp-block-columns.is-layout-flex){gap: 2em;}:where(.wp-block-columns.is-layout-grid){gap: 2em;}
+:root :where(.wp-block-pullquote){font-size: 1.5em;line-height: 1.6;}
+</style>
+<link rel='stylesheet' id='cookie-notice-front-css' href='https://excaliburfonder.se/wp-content/plugins/cookie-notice/css/front.min.css?ver=2.5.11' type='text/css' media='all' />
+<link rel='stylesheet' id='style-css' href='https://excaliburfonder.se/wp-content/themes/excalfond/style.css?ver=1.2' type='text/css' media='all' />
+<link rel='stylesheet' id='fontawesome-css' href='https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css?ver=4.4.0' type='text/css' media='all' />
+<script type="text/javascript" id="cookie-notice-front-js-before">
+/* <![CDATA[ */
+var cnArgs = {"ajaxUrl":"https:\/\/excaliburfonder.se\/wp-admin\/admin-ajax.php","nonce":"63e6fc4835","hideEffect":"fade","position":"bottom","onScroll":false,"onScrollOffset":100,"onClick":false,"cookieName":"cookie_notice_accepted","cookieTime":3600,"cookieTimeRejected":3600,"globalCookie":false,"redirection":false,"cache":true,"revokeCookies":false,"revokeCookiesOpt":"automatic"};
+/* ]]> */
+</script>
+<script type="text/javascript" src="https://excaliburfonder.se/wp-content/plugins/cookie-notice/js/front.min.js?ver=2.5.11" id="cookie-notice-front-js"></script>
+<link rel="https://api.w.org/" href="https://excaliburfonder.se/wp-json/" /><link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://excaliburfonder.se/xmlrpc.php?rsd" />
+
+<link rel="icon" href="https://excaliburfonder.se/wp-content/uploads/2021/11/Red_Excalibur_onlyE_transparent.png" sizes="32x32" />
+<link rel="icon" href="https://excaliburfonder.se/wp-content/uploads/2021/11/Red_Excalibur_onlyE_transparent.png" sizes="192x192" />
+<link rel="apple-touch-icon" href="https://excaliburfonder.se/wp-content/uploads/2021/11/Red_Excalibur_onlyE_transparent.png" />
+<meta name="msapplication-TileImage" content="https://excaliburfonder.se/wp-content/uploads/2021/11/Red_Excalibur_onlyE_transparent.png" />
+		<style type="text/css" id="wp-custom-css">
+			.site-header .logos .site-logo .logo-svg {
+	background-image: url("https://excaliburfonder.se/wp-content/uploads/2021/11/excalibur_logga.png");
+}
+
+.site-footer--site-logo .logo-svg {
+		background-image: url("https://excaliburfonder.se/wp-content/uploads/2021/11/excalibur_logga.png");
+}
+
+div#input_4_7 div {
+    margin: 0 auto;
+}
+ /*** width 100% on column when form is gone https://excaliburfonder.se/manadsrapporter/ ***/
+.gt-width-100 {
+	width: 100%;
+}
+
+/*** Hiding Trude fond on startpage ***/ 
+.fund.Trude {
+	display: none;
+}
+
+.funds .col-sm-6 {
+	width: 100%;
+}
+
+.funds .fund img {
+	margin: 40px auto !important;
+}
+
+.funds .fund p {
+	width: 80%;
+	margin: 0 auto;
+}
+
+.funds .fund.Excalibur figure {
+	background-color: rgba(0,0,0,0) !important;
+	border-bottom-color: rgba(0,0,0,0) !important;
+}
+
+.funds .fund img {
+	opacity: 1 !important;
+}
+
+/*** Hiding Trude fond in menu 
+.mega-menu-container li#menu-item-65,
+.mega-menu-container li#menu-item-931 {
+    display: none;
+}***/
+
+/*** Hiding Trude blue banner on startpage ***/
+
+section.value_development.trude {
+    background: #303644;
+    display: none;
+}
+
+/*** new styling on list ***/
+
+.entry-content ol li, .entry-content ul li {
+	  font-family: sofia-pro,sans-serif;
+    font-weight: 300;
+    font-style: normal;
+    font-size: 18px;
+    color: #8F8F8F;
+    line-height: 1.44em;
+}
+
+#cookie-notice .cn-button {
+    margin-left: 10px;
+    background-color: #552128;
+    padding: 2px 5px;
+    color: #fff;
+}
+
+#cookie-notice .cn-button:hover {
+    background-color: #9b9b9b;
+}
+
+
+
+.component.icon_component.excalibur a .icon {
+	border-color: #5B222B;
+}
+
+.component.icon_component.excalibur a .icon:hover {
+	background-color: #5B222B
+}
+
+.component.icon_component.excalibur a,
+.documents .ex-tabs.Excalibur .tabs-content li ul li a {
+	color: #5B222B;
+}
+
+section.value_development.excalibur, 
+.component.graph .graph-controls.Excalibur button,
+.sub-nav.Excalibur,
+.subpage-map .info-window {
+	background: #5B222B;
+}
+
+.documents .ex-tabs.Excalibur .tabs-navigation li a {
+	background-color: #5B222B;
+}
+
+#cn-accept-cookie,
+#cn-close-notice {
+	display: none !important;
+}
+
+#cookie-notice {
+	display: none !important;
+}
+
+.footer-return-info {
+	display: block;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	width: auto;
+	padding: 10px 30px;
+	background: rgba(0, 0, 0, 0.6);
+	color: #fff;
+	font-size: 14px;
+	text-align: center;
+}
+
+.footer-return-info a {
+	background-color: #5B222B;
+	color: #fff;
+	font-size: 14px;
+	text-align: center;
+	display: inline-block;
+	font-weight: 400;
+	font-style: normal;
+	line-height: 1.25;
+	padding: 7px 10px 9px;
+	margin-left: 10px;
+}
+
+.footer-return-info a:hover {
+	background: #80303d;
+}
+
+@media only screen and (max-width: 767px) {
+	.footer-return-info a {
+		display: block;
+    margin: 10px auto 0;
+	}
+}		</style>
+		</head>
+<body class="error404 cookies-not-set">
+
+<header class="site-header">
+	<span class="toggle-menu visible-sm visible-xs">
+		<span></span>
+	</span>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-3">
+				<div class="logos">
+										<a class="site-logo" href="https://excaliburfonder.se/" title="Excalibur Fonder" rel="home">
+						<!--[if lt IE 9]>
+							<img src="https://excaliburfonder.se/wp-content/themes/excalfond/images/excalibur_logga.png" alt="Excalibur Fonder">
+						<![endif]-->
+						<!--[if !(IE 6) | !(IE 7) | !(IE 8)  ]><!-->
+							<span class="logo-svg">Excalibur Fonder</span>
+						<!--<![endif]-->
+					</a>
+				</div>
+			</div>
+			<div class="col-md-9">
+				<div class="site-header--navigation">
+					<nav class="navigation-primary hidden-sm hidden-xs"><ul id="menu-sidhuvud-navigation" class="navigation-primary--menu"><li id="menu-item-243" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children"><a href="https://excaliburfonder.se/fonden/">Fonden</a>
+<div class="mega-menu-container"><div class="mega-menu-inner"><ul class="sub-menu"><li id="menu-item-59" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children"><a href="https://excaliburfonder.se/fonden/excalibur/">Excalibur Fixed Income</a>
+	<ul class="sub-menu"><li id="menu-item-367" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/fonden/excalibur/">Om fonden</a></li>
+<li id="menu-item-170" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/fonden/excalibur/vardeutveckling/">Värdeutveckling</a></li>
+<li id="menu-item-171" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/fonden/excalibur/forvaltarna/">Förvaltarna</a></li>
+<li id="menu-item-169" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/fonden/excalibur/investeringsfilosofi/">Investeringsfilosofi</a></li>
+<li id="menu-item-435" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/fonden/excalibur/teckning-inlosen-excalibur/">Teckning/inlösen</a></li>
+
+	</ul></li>
+
+</ul></div></div></li>
+<li id="menu-item-1913" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children"><a href="https://excaliburfonder.se/att-vara-kund/">Investera</a>
+<div class="mega-menu-container"><div class="mega-menu-inner"><ul class="sub-menu"><li id="menu-item-1914" class="column menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children"><a href="#column">column</a>
+	<ul class="sub-menu"><li id="menu-item-1825" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/att-vara-kund/hedgefond/">Hedgefond</a></li>
+<li id="menu-item-1826" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/att-vara-kund/excaliburrantan/">Excaliburräntan</a></li>
+<li id="menu-item-1915" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/fonden/excalibur/teckning-inlosen-excalibur/">Teckning/inlösen Excalibur</a></li>
+<li id="menu-item-1175" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/att-vara-kund/klagomal/">Klagomål</a></li>
+
+	</ul></li>
+
+</ul></div></div></li>
+<li id="menu-item-64" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children"><a href="https://excaliburfonder.se/om-oss/">Om oss</a>
+<div class="mega-menu-container"><div class="mega-menu-inner"><ul class="sub-menu"><li id="menu-item-1821" class="column menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children"><a href="#column">column</a>
+	<ul class="sub-menu"><li id="menu-item-445" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/om-oss/fondbolaget/">Fondbolaget</a></li>
+<li id="menu-item-447" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/om-oss/organisation/">Organisation</a></li>
+<li id="menu-item-446" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/om-oss/legal-information/">Legal information</a></li>
+<li id="menu-item-3799" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/om-oss/hallbarhetsarbete/">Hållbarhetsrelaterade upplysningar</a></li>
+<li id="menu-item-1897" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/om-oss/samhallsengagemang/">Samhällsengagemang</a></li>
+
+	</ul></li>
+
+</ul></div></div></li>
+<li id="menu-item-63" class="menu-item menu-item-type-post_type menu-item-object-page current_page_parent"><a href="https://excaliburfonder.se/nyheter/">Nyheter</a></li>
+<li id="menu-item-61" class="menu-item menu-item-type-post_type menu-item-object-page"><a href="https://excaliburfonder.se/kontakt/">Kontakt</a></li>
+</ul></nav>
+										<nav class="navigation-secondary">
+						<ul class="navigation-secondary--menu">
+							<li class="select-language-dropdown">
+								<span class="title">SV <i class="fa fa-angle-down"></i></span>
+								<ul class="dropdown">
+									<li>
+																					<a href="https://excaliburfonder.se/en">
+												EN
+											</a>
+																													</li>
+								</ul>
+							</li>
+							<li class="sign-in">
+								<a href="https://excaliburfonder.se/nyhetsbrev-2/" class="btn">
+									<span class="hidden-sm hidden-xs">Nyhetsbrev</span>
+									<span class="visible-sm visible-xs"><i class="fa fa-lock" aria-hidden="true"></i></span>
+								</a>
+							</li>
+							<li class="search hidden-sm hidden-xs">
+								<i class="fa fa-search"></i>
+								<form role="search" method="get" class="search-form" action="https://excaliburfonder.se/">
+	<label class="sr-only">Sök efter:</label>
+	<input type="search" value="" name="s" class="search-field" placeholder="Sök" required>
+	<button type="submit" class="search-submit btn btn-default">Sök</button>
+</form>							</li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+		</div>
+	</div>
+	<nav class="main-navigation visible-sm visible-xs">
+		<div class="scroll">
+			<h3 class="hidden-xs">Meny</h3>
+			<div class="visible-sm visible-xs">
+				<form role="search" method="get" class="search-form" action="https://excaliburfonder.se/">
+	<label class="sr-only">Sök efter:</label>
+	<input type="search" value="" name="s" class="search-field" placeholder="Sök" required>
+	<button type="submit" class="search-submit btn btn-default">Sök</button>
+</form>			</div>
+			<ul class="flexnav"><li id="menu-item-243" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-243"><a href="https://excaliburfonder.se/fonden/">Fonden</a>
+<ul class="sub-menu">
+	<li id="menu-item-59" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-59"><a href="https://excaliburfonder.se/fonden/excalibur/">Excalibur Fixed Income</a>
+	<ul class="sub-menu">
+		<li id="menu-item-367" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-367"><a href="https://excaliburfonder.se/fonden/excalibur/">Om fonden</a></li>
+		<li id="menu-item-170" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-170"><a href="https://excaliburfonder.se/fonden/excalibur/vardeutveckling/">Värdeutveckling</a></li>
+		<li id="menu-item-171" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-171"><a href="https://excaliburfonder.se/fonden/excalibur/forvaltarna/">Förvaltarna</a></li>
+		<li id="menu-item-169" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-169"><a href="https://excaliburfonder.se/fonden/excalibur/investeringsfilosofi/">Investeringsfilosofi</a></li>
+		<li id="menu-item-435" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-435"><a href="https://excaliburfonder.se/fonden/excalibur/teckning-inlosen-excalibur/">Teckning/inlösen</a></li>
+	</ul>
+</li>
+</ul>
+</li>
+<li id="menu-item-1913" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-1913"><a href="https://excaliburfonder.se/att-vara-kund/">Investera</a>
+<ul class="sub-menu">
+	<li id="menu-item-1914" class="column menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-1914"><a href="#column">column</a>
+	<ul class="sub-menu">
+		<li id="menu-item-1825" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1825"><a href="https://excaliburfonder.se/att-vara-kund/hedgefond/">Hedgefond</a></li>
+		<li id="menu-item-1826" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1826"><a href="https://excaliburfonder.se/att-vara-kund/excaliburrantan/">Excaliburräntan</a></li>
+		<li id="menu-item-1915" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1915"><a href="https://excaliburfonder.se/fonden/excalibur/teckning-inlosen-excalibur/">Teckning/inlösen Excalibur</a></li>
+		<li id="menu-item-1175" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1175"><a href="https://excaliburfonder.se/att-vara-kund/klagomal/">Klagomål</a></li>
+	</ul>
+</li>
+</ul>
+</li>
+<li id="menu-item-64" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-64"><a href="https://excaliburfonder.se/om-oss/">Om oss</a>
+<ul class="sub-menu">
+	<li id="menu-item-1821" class="column menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-1821"><a href="#column">column</a>
+	<ul class="sub-menu">
+		<li id="menu-item-445" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-445"><a href="https://excaliburfonder.se/om-oss/fondbolaget/">Fondbolaget</a></li>
+		<li id="menu-item-447" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-447"><a href="https://excaliburfonder.se/om-oss/organisation/">Organisation</a></li>
+		<li id="menu-item-446" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-446"><a href="https://excaliburfonder.se/om-oss/legal-information/">Legal information</a></li>
+		<li id="menu-item-3799" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3799"><a href="https://excaliburfonder.se/om-oss/hallbarhetsarbete/">Hållbarhetsrelaterade upplysningar</a></li>
+		<li id="menu-item-1897" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1897"><a href="https://excaliburfonder.se/om-oss/samhallsengagemang/">Samhällsengagemang</a></li>
+	</ul>
+</li>
+</ul>
+</li>
+<li id="menu-item-63" class="menu-item menu-item-type-post_type menu-item-object-page current_page_parent menu-item-63"><a href="https://excaliburfonder.se/nyheter/">Nyheter</a></li>
+<li id="menu-item-61" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-61"><a href="https://excaliburfonder.se/kontakt/">Kontakt</a></li>
+</ul>		</div>
+	</nav>
+</header><div id="main" role="main">
+	<section class="component content">
+		<div class="container">
+			<center>
+			<h1>404 - Sidan hittas inte.</h1>
+			<br />
+			<h3>Det ser ut som ingenting hittades på den här platsen. Prova en sökning ?</h3>
+			</center>
+		</div>
+	</section>
+</div>
+<footer class="site-footer">
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-12">
+				<nav class="site-footer--navigation">
+					<ul class="site-footer--navigation-items">
+					<li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-243"><a href="https://excaliburfonder.se/fonden/">Fonden</a></li>
+<li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1913"><a href="https://excaliburfonder.se/att-vara-kund/">Investera</a></li>
+<li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-64"><a href="https://excaliburfonder.se/om-oss/">Om oss</a></li>
+<li class="menu-item menu-item-type-post_type menu-item-object-page current_page_parent menu-item-63"><a href="https://excaliburfonder.se/nyheter/">Nyheter</a></li>
+<li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-61"><a href="https://excaliburfonder.se/kontakt/">Kontakt</a></li>
+										</ul>
+				</nav>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-sm-6">
+									<div class="site-footer--content-left">
+						<p><a href="mailto:admin@excaliburfonder.se">admin@excaliburfonder.se</a></p>
+<p><a href="tel:+46859929510">08 &#8211; 599 295 10</a></p>
+<p>Birger Jarlsgatan 15, 2 tr, SE-111 45 Stockholm</p>
+<p><a href="https://www.google.se/maps/place/Birger+Jarlsgatan+15,+111+45+Stockholm/@59.3347708,18.0714597,17z/data=!4m5!3m4!1s0x465f9d5b7f2bd645:0x5c46a82e044f8d20!8m2!3d59.3347708!4d18.0736484">Visa på karta</a></p>
+					</div>
+				
+				<a class="site-footer--site-logo site-logo" href="https://excaliburfonder.se/" title="Excalibur Fonder" rel="home">
+	            	<!--[if lt IE 9]>
+	                	<img src="https://excaliburfonder.se/wp-content/themes/excalfond/images/excalibur_fonder.png" alt="Excalibur Fonder">
+	                <![endif]-->
+	                <!--[if !(IE 6) | !(IE 7) | !(IE 8)  ]><!-->
+	                    <span class="logo-svg">Excalibur Fonder</span>
+	                <!--<![endif]-->
+	            </a>
+
+									<div class="site-footer--disclaimer">
+						<p style="text-align: left">© 2015 Excalibur Asset Management AB     <a href="http://www.excaliburfonder.se/om-webbplatsen/">Om webbplatsen</a>     <a href="https://excaliburfonder.se/disclaimer/">Disclaimer</a>     <a href="https://excaliburfonder.se/wp-content/uploads/2024/09/Integritetspolicy-EAM.pdf">Integritetspolicy</a></p>
+					</div>
+							</div>
+			<div class="col-sm-6">
+									<div class="site-footer--content-right">
+						<h4>Vill du få tillgång till våra nyhetsbrev?</h4>
+<p><a href="http://www.excaliburfonder.se/manadsrapporter/">Registrera nu</a></p>
+					</div>
+							</div>
+		</div>
+				<div class="row footer-return-info">
+			<div class="col-sm-12">
+					<div class="site-footer--info">
+						<p>Historisk avkastning är ingen garanti för framtida avkastning. Pengar som placeras i fonder kan både öka och minska i värde och det är inte säkert att du får tillbaka hela det insatta kapitalet. <a href="https://excaliburfonder.se/disclaimer" target="_blank" rel="noopener">Läs mer</a></p>
+					</div>
+			</div>
+		</div>
+			</div>
+</footer>
+
+<div class="overlay">
+	<div class="overlay-content">
+		<div class="scroll">
+			<p>The fund Excalibur Fixed Income is managed by Excalibur Asset Management AB and is a so called special fund governed by the law (2013:561) on Alternative Investment Fund Managers. The fund is not covered by the provisions of the Council Directive of 20 December 1985 on the Coordination of Laws, Regulations and Administrative Provisions relating to Undertakings for Collective Investment in Transferable Securities (UCITS) (85/611/EEC), as amended, (the &#8221;UCITS Directive&#8221;).</p>
+<p>This website is not intended, and should not be considered a recommendation by Excalibur Asset Management AB, that users of the website should purchase units in the fund managed by Excalibur Asset Management AB. Prospective purchasers should form their own opinion of any potential investment in the fund, taking into account the information contained in the information brochure, fund prospectus and fact sheets for Excalibur.</p>
+<p>There is no guarantee that an investment in Excalibur Fixed Income will not lead to a loss. This is also the case even if there is a positive development in other parts of the financial markets. Historical development is no guarantee for future returns. Any means invested in the fund can appreciate as well as depreciate in value and there is no guarantee that the full invested value will be returned. The fund value may vary a lot due to the composition of the fund and the methods of portfolio management used.</p>
+<p>Distribution of information in respect of funds managed by Excalibur Asset Management AB in certain jurisdictions may be restricted by law. Persons that are contemplating to request such information are required by Excalibur Asset Management AB to inform themselves about and observe such restrictions.</p>
+<p>The units of the fund in Excalibur Fixed Income may be marketed to both professional and non-professional investors in Sweden. Excalibur Asset Management AB also have the right to market Excalibur to professional investors in Finland, Luxembourg, Ireland, the Netherlands, Great Britain and Norway.</p>
+<p>The units of the fund Excalibur Fixed Income, with its different share classes and feeder funds, have not been registered, and will not be registered, in accordance with any securities legislation in the United States, Canada, Japan, Australia or elsewhere and may not be offered or sold to or within the United States, Canada, Japan, Australia or in any other country where such offer or sale would conflict with applicable laws or regulations. No information of any nature may be transmitted to parties in these countries except pursuant to an exemption from, or in a transaction not subject to, the registration requirements of such applicable securities legislation. Nor may the units of Excalibur be offered or sold to persons in these countries except pursuant to an exemption from, or in a transaction not subject to, the registration requirements of such applicable securities legislation.</p>
+<p>No offering of units, as applicable, is or will be made to persons whose participation in Excalibur Fixed Income requires that further information brochures or prospectus are issued or that registration or other measures are taken in addition to those required under Swedish law. Excalibur Asset Management AB has no responsibility whatsoever for determining that an investment from outside Sweden is being made in accordance with the law of that country.</p>
+<p>Any dispute, controversy or claim arising out of or in connection with information regarding Excalibur Fixed Income shall be settled in accordance with Swedish legislation exclusively by a Swedish court of law.</p>
+<p>Except for certain information related to specific market conditions, the information on this website has been prepared in Swedish and translated into English only for the convenience of non-Swedish readers. In the event of any discrepancies between the Swedish and the English versions of the website, the Swedish version shall prevail.</p>
+		</div>
+		<a href="#" class="approve">I approve</a>
+		<a href="#" class="not-approve">I don't approve</a>
+	</div>
+</div>
+
+<script type='text/javascript'>
+	var wp_site_url = 'https://excaliburfonder.se/';
+	var wp_home_url = 'https://excaliburfonder.se/';
+</script>
+<script type="text/javascript" id="rocket-browser-checker-js-after">
+/* <![CDATA[ */
+"use strict";var _createClass=function(){function defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||!1,descriptor.configurable=!0,"value"in descriptor&&(descriptor.writable=!0),Object.defineProperty(target,descriptor.key,descriptor)}}return function(Constructor,protoProps,staticProps){return protoProps&&defineProperties(Constructor.prototype,protoProps),staticProps&&defineProperties(Constructor,staticProps),Constructor}}();function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor))throw new TypeError("Cannot call a class as a function")}var RocketBrowserCompatibilityChecker=function(){function RocketBrowserCompatibilityChecker(options){_classCallCheck(this,RocketBrowserCompatibilityChecker),this.passiveSupported=!1,this._checkPassiveOption(this),this.options=!!this.passiveSupported&&options}return _createClass(RocketBrowserCompatibilityChecker,[{key:"_checkPassiveOption",value:function(self){try{var options={get passive(){return!(self.passiveSupported=!0)}};window.addEventListener("test",null,options),window.removeEventListener("test",null,options)}catch(err){self.passiveSupported=!1}}},{key:"initRequestIdleCallback",value:function(){!1 in window&&(window.requestIdleCallback=function(cb){var start=Date.now();return setTimeout(function(){cb({didTimeout:!1,timeRemaining:function(){return Math.max(0,50-(Date.now()-start))}})},1)}),!1 in window&&(window.cancelIdleCallback=function(id){return clearTimeout(id)})}},{key:"isDataSaverModeOn",value:function(){return"connection"in navigator&&!0===navigator.connection.saveData}},{key:"supportsLinkPrefetch",value:function(){var elem=document.createElement("link");return elem.relList&&elem.relList.supports&&elem.relList.supports("prefetch")&&window.IntersectionObserver&&"isIntersecting"in IntersectionObserverEntry.prototype}},{key:"isSlowConnection",value:function(){return"connection"in navigator&&"effectiveType"in navigator.connection&&("2g"===navigator.connection.effectiveType||"slow-2g"===navigator.connection.effectiveType)}}]),RocketBrowserCompatibilityChecker}();
+/* ]]> */
+</script>
+<script type="text/javascript" id="rocket-preload-links-js-extra">
+/* <![CDATA[ */
+var RocketPreloadLinksConfig = {"excludeUris":"\/|\/nyheter\/nyhetsbrevet-for-juli-pulicerat\/|\/(?:.+\/)?feed(?:\/(?:.+\/?)?)?$|\/(?:.+\/)?embed\/|\/(index.php\/)?(.*)wp-json(\/.*|$)|\/refer\/|\/go\/|\/recommend\/|\/recommends\/","usesTrailingSlash":"","imageExt":"jpg|jpeg|gif|png|tiff|bmp|webp|avif|pdf|doc|docx|xls|xlsx|php","fileExt":"jpg|jpeg|gif|png|tiff|bmp|webp|avif|pdf|doc|docx|xls|xlsx|php|html|htm","siteUrl":"https:\/\/excaliburfonder.se","onHoverDelay":"100","rateThrottle":"3"};
+/* ]]> */
+</script>
+<script type="text/javascript" id="rocket-preload-links-js-after">
+/* <![CDATA[ */
+(function() {
+"use strict";var r="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},e=function(){function i(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(e,t,n){return t&&i(e.prototype,t),n&&i(e,n),e}}();function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}var t=function(){function n(e,t){i(this,n),this.browser=e,this.config=t,this.options=this.browser.options,this.prefetched=new Set,this.eventTime=null,this.threshold=1111,this.numOnHover=0}return e(n,[{key:"init",value:function(){!this.browser.supportsLinkPrefetch()||this.browser.isDataSaverModeOn()||this.browser.isSlowConnection()||(this.regex={excludeUris:RegExp(this.config.excludeUris,"i"),images:RegExp(".("+this.config.imageExt+")$","i"),fileExt:RegExp(".("+this.config.fileExt+")$","i")},this._initListeners(this))}},{key:"_initListeners",value:function(e){-1<this.config.onHoverDelay&&document.addEventListener("mouseover",e.listener.bind(e),e.listenerOptions),document.addEventListener("mousedown",e.listener.bind(e),e.listenerOptions),document.addEventListener("touchstart",e.listener.bind(e),e.listenerOptions)}},{key:"listener",value:function(e){var t=e.target.closest("a"),n=this._prepareUrl(t);if(null!==n)switch(e.type){case"mousedown":case"touchstart":this._addPrefetchLink(n);break;case"mouseover":this._earlyPrefetch(t,n,"mouseout")}}},{key:"_earlyPrefetch",value:function(t,e,n){var i=this,r=setTimeout(function(){if(r=null,0===i.numOnHover)setTimeout(function(){return i.numOnHover=0},1e3);else if(i.numOnHover>i.config.rateThrottle)return;i.numOnHover++,i._addPrefetchLink(e)},this.config.onHoverDelay);t.addEventListener(n,function e(){t.removeEventListener(n,e,{passive:!0}),null!==r&&(clearTimeout(r),r=null)},{passive:!0})}},{key:"_addPrefetchLink",value:function(i){return this.prefetched.add(i.href),new Promise(function(e,t){var n=document.createElement("link");n.rel="prefetch",n.href=i.href,n.onload=e,n.onerror=t,document.head.appendChild(n)}).catch(function(){})}},{key:"_prepareUrl",value:function(e){if(null===e||"object"!==(void 0===e?"undefined":r(e))||!1 in e||-1===["http:","https:"].indexOf(e.protocol))return null;var t=e.href.substring(0,this.config.siteUrl.length),n=this._getPathname(e.href,t),i={original:e.href,protocol:e.protocol,origin:t,pathname:n,href:t+n};return this._isLinkOk(i)?i:null}},{key:"_getPathname",value:function(e,t){var n=t?e.substring(this.config.siteUrl.length):e;return n.startsWith("/")||(n="/"+n),this._shouldAddTrailingSlash(n)?n+"/":n}},{key:"_shouldAddTrailingSlash",value:function(e){return this.config.usesTrailingSlash&&!e.endsWith("/")&&!this.regex.fileExt.test(e)}},{key:"_isLinkOk",value:function(e){return null!==e&&"object"===(void 0===e?"undefined":r(e))&&(!this.prefetched.has(e.href)&&e.origin===this.config.siteUrl&&-1===e.href.indexOf("?")&&-1===e.href.indexOf("#")&&!this.regex.excludeUris.test(e.href)&&!this.regex.images.test(e.href))}}],[{key:"run",value:function(){"undefined"!=typeof RocketPreloadLinksConfig&&new n(new RocketBrowserCompatibilityChecker({capture:!0,passive:!0}),RocketPreloadLinksConfig).init()}}]),n}();t.run();
+}());
+/* ]]> */
+</script>
+<script type="text/javascript" src="https://excaliburfonder.se/wp-includes/js/jquery/jquery.js?ver=3.7.1" id="jquery-js"></script>
+<script type="text/javascript" id="app-js-extra">
+/* <![CDATA[ */
+var WPTemplate = {"ajaxurl":"https:\/\/excaliburfonder.se\/wp-content\/themes\/excalfond\/inc\/ajax.php","graph_no_matching_date_period":"Ingen data inom denna period.","cookieMessageText":"Den h\u00e4r webbplatsen anv\u00e4nder cookies f\u00f6r att f\u00f6rb\u00e4ttra din anv\u00e4ndarupplevelse. Genom att forts\u00e4tta anv\u00e4nda webbplatsen samtycker du till att cookies anv\u00e4nds. F\u00f6r mer information <a href=\"http:\/\/www.excaliburfonder.se\/om-webbplatsen\/\">l\u00e4s h\u00e4r<\/a>.","cookieAcceptText":"Jag godk\u00e4nner"};
+/* ]]> */
+</script>
+<script type="text/javascript" src="https://excaliburfonder.se/wp-content/themes/excalfond/js/app.min.js?ver=1.0" id="app-js"></script>
+<script type="text/javascript" src="https://excaliburfonder.se/wp-content/themes/excalfond/js/custom.js?ver=1.0.0" id="custom-js"></script>
+<script type="text/javascript">
+(function() {
+				var expirationDate = new Date();
+				expirationDate.setTime( expirationDate.getTime() + 31536000 * 1000 );
+				document.cookie = "pll_language=sv; expires=" + expirationDate.toUTCString() + "; path=/; secure; SameSite=Lax";
+			}());
+
+</script>
+
+		<!-- Cookie Notice plugin v2.5.11 by Hu-manity.co https://hu-manity.co/ -->
+		<div id="cookie-notice" role="dialog" class="cookie-notice-hidden cookie-revoke-hidden cn-position-bottom" aria-label="Cookie Notice" style="background-color: rgba(155,155,155,0.8);"><div class="cookie-notice-container" style="color: #fff"><span id="cn-notice-text" class="cn-text-container">Historisk avkastning är ingen garanti för framtida avkastning. Pengar som placeras i fonder kan både öka och minska i värde och det är inte säkert att du får tillbaka hela det insatta kapitalet.</span><span id="cn-notice-buttons" class="cn-buttons-container"><button id="cn-accept-cookie" data-cookie-set="accept" class="cn-set-cookie cn-button cn-button-custom button" aria-label="Ok">Ok</button><button data-link-url="https://excaliburfonder.se/disclaimer" data-link-target="_blank" id="cn-more-info" class="cn-more-info cn-button cn-button-custom button" aria-label="Läs mer">Läs mer</button></span><button type="button" id="cn-close-notice" data-cookie-set="accept" class="cn-close-icon" aria-label="Nej"></button></div>
+			
+		</div>
+		<!-- / Cookie Notice plugin --></body>
+</html>

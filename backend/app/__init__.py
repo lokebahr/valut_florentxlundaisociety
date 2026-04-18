@@ -11,6 +11,7 @@ def create_app():
     CORS(app, resources={r"/api/*": {"origins": app.config["FRONTEND_ORIGIN"]}}, supports_credentials=True)
     init_db(app)
 
+    from app.api.agent import bp as agent_bp
     from app.api.analysis import bp as analysis_bp
     from app.api.auth import bp as auth_bp
     from app.api.dashboard import bp as dashboard_bp
@@ -24,6 +25,7 @@ def create_app():
     app.register_blueprint(montrose_bp)
     app.register_blueprint(analysis_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(agent_bp)
 
     @app.get("/api/health")
     def health():

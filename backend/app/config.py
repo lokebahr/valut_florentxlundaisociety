@@ -46,6 +46,9 @@ class Config:
     HOLDINGS_SERVICE_URL = os.environ.get("HOLDINGS_SERVICE_URL", "")
     HOLDINGS_SERVICE_TIMEOUT = int(os.environ.get("HOLDINGS_SERVICE_TIMEOUT", "15"))
 
+    FUND_PARSER_URL = os.environ.get("FUND_PARSER_URL", "http://localhost:8000")
+    ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
 
 def load_config(app):
     app.config.from_object(Config)
