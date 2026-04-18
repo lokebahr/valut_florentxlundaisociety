@@ -60,6 +60,59 @@ function openMontroseTradeUrls(res: MontrosePrepareResponse): boolean {
   return urls.length > 0
 }
 
+function Bone({ w, h, radius }: { w?: string; h?: string; radius?: string }) {
+  return (
+    <div
+      className="skel-bone"
+      style={{ width: w ?? '100%', height: h ?? '1rem', borderRadius: radius ?? '6px' }}
+    />
+  )
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="skel" aria-label="Laddar dashboard…" aria-busy="true">
+      {/* Hero */}
+      <div className="skel-hero" />
+
+      {/* Tab bar */}
+      <div className="skel-tabbar">
+        <Bone w="5rem" h="0.85rem" radius="4px" />
+        <Bone w="4rem" h="0.85rem" radius="4px" />
+        <Bone w="4.5rem" h="0.85rem" radius="4px" />
+      </div>
+
+      <div className="skel-body">
+        {/* Metric cards */}
+        <div className="skel-metrics">
+          {[0, 1, 2, 3].map(i => (
+            <div key={i} className="skel-card">
+              <Bone w="50%" h="0.65rem" />
+              <Bone w="70%" h="1.35rem" />
+            </div>
+          ))}
+        </div>
+
+        {/* Health card */}
+        <div className="skel-card skel-health">
+          <div className="skel-ring" />
+          <div className="skel-health__body">
+            <Bone w="5rem" h="1.5rem" radius="99px" />
+            <Bone w="90%" h="0.75rem" />
+            <Bone w="75%" h="0.75rem" />
+            <Bone w="100%" h="0.55rem" radius="99px" />
+          </div>
+        </div>
+
+        {/* Sections */}
+        {[180, 140, 200].map((h, i) => (
+          <div key={i} className="skel-card" style={{ height: h }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function Dashboard() {
   const [data, setData] = useState<Overview | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -149,22 +202,13 @@ export function Dashboard() {
   if (!data) {
     return (
       <Shell>
-        <div className="page narrow">
-          <p className="muted" aria-live="polite">
-            Laddar
-            <span className="loading-dots" aria-hidden>
-              <span />
-              <span />
-              <span />
-            </span>
-          </p>
-        </div>
+        <DashboardSkeleton />
       </Shell>
     )
   }
 
   return (
-    <Shell hideFooter={tab === 'overview'}>
+    <Shell>
       <div
         className={`page page--wide dashboard-root stack${tab === 'overview' ? ' dashboard-root--overview' : ''}`}
         style={{ gap: tab === 'overview' ? 0 : '1.5rem' }}

@@ -511,6 +511,7 @@ export function Onboarding() {
   }
   const [agentResult, setAgentResult] = useState<AgentResult | null>(null)
   const [agentLoading, setAgentLoading] = useState(false)
+  const [finishing, setFinishing] = useState(false)
 
   useEffect(() => { window.scrollTo(0, 0) }, [step])
 
@@ -722,11 +723,13 @@ export function Onboarding() {
   async function finishOnboarding(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    setFinishing(true)
     try {
       await persistProfile({ onboarding_completed: true })
       navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kunde inte slutföra.')
+      setFinishing(false)
     }
   }
 
@@ -1149,8 +1152,9 @@ export function Onboarding() {
             )}
             <div className="step-nav">
               <button type="button" className="btn-ghost" onClick={back} disabled={enriching}>Tillbaka</button>
-              <button type="button" className="btn-primary" onClick={enrichAndAdvance} disabled={enriching}>
-                {enriching ? 'Analyserar fonder…' : 'Nästa'}
+              <button type="button" className="btn-primary btn--loading" onClick={enrichAndAdvance} disabled={enriching}>
+                {enriching && <span className="btn-spinner" aria-hidden />}
+                {enriching ? 'Hämtar fondblad…' : 'Nästa'}
               </button>
             </div>
           </section>
@@ -1271,7 +1275,10 @@ export function Onboarding() {
             </div>
 
             {agentLoading && (
-              <p className="muted small">Analyserar din portfölj med AI…</p>
+              <div className="agent-loading">
+                <span className="btn-spinner agent-loading__spinner" aria-hidden />
+                <p className="muted small">Analyserar din portfölj med AI…</p>
+              </div>
             )}
 
             {agentResult && !agentResult.error && (
@@ -1304,8 +1311,9 @@ export function Onboarding() {
             )}
 
             <form onSubmit={finishOnboarding}>
-              <button type="submit" className="btn-primary" disabled={agentLoading}>
-                Öppna översikt
+              <button type="submit" className="btn-primary btn--loading" disabled={agentLoading || finishing}>
+                {(agentLoading || finishing) && <span className="btn-spinner" aria-hidden />}
+                {finishing ? 'Öppnar…' : agentLoading ? 'Analyserar…' : 'Öppna översikt'}
               </button>
             </form>
           </section>
