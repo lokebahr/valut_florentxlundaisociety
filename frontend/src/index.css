@@ -111,6 +111,9 @@ a:hover {
   background: #fffcf7cc;
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .shell-logo {
@@ -1595,4 +1598,117 @@ ul.plain li {
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+
+/* ── Dashboard tabs ─────────────────────────────────────────── */
+.dash-tabs {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 0.3rem;
+  border: 1px solid var(--border);
+}
+
+.dash-tab {
+  flex: 1;
+  padding: 0.55rem 1rem;
+  border: none;
+  background: transparent;
+  border-radius: calc(var(--radius) - 4px);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.dash-tab:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.dash-tab--active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ── Profile tab rows ───────────────────────────────────────── */
+.profile-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  gap: 1rem;
+}
+
+.profile-row:last-child {
+  border-bottom: none;
+}
+
+.profile-row dt {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.profile-row dd {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ── Tracker holding bar ────────────────────────────────────── */
+.holding__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.holding__value {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.holding__bar-wrap {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-bottom: 0.4rem;
+  overflow: hidden;
+}
+
+.holding__bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.6s ease;
+  min-width: 2px;
+}
+
+/* ── Shell logout ───────────────────────────────────────────── */
+.shell-logout {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.shell-logout:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
