@@ -3044,8 +3044,6 @@ ul.plain li {
   justify-content: space-between;
   gap: 0.55rem 1rem;
   padding: 0.5rem clamp(0.75rem, 2.2vw, 1.35rem);
-  border-top: 1px solid var(--line);
-  background: rgba(255, 252, 247, 0.97);
 }
 
 .dashboard-root--overview .overview-reengage__text {
@@ -3872,4 +3870,112 @@ ul.plain li {
   border-top-color: var(--accent);
   width: 1.1rem;
   height: 1.1rem;
+}
+
+/* ── Dashboard readability & depth overrides ────────────────── */
+
+/* Base font bump for the whole overview */
+.dashboard-root--overview {
+  font-size: 0.95rem;
+}
+
+/* Bento grid — more breathing room */
+.dashboard-root--overview .overview-bento {
+  gap: 1rem;
+  padding-top: 1.5rem;
+  padding-bottom: 4rem;
+}
+
+/* All cells — more padding */
+.dashboard-root--overview .overview-bento__cell,
+.dashboard-root--overview .overview-bento__cell--funds-block,
+.dashboard-root--overview .overview-bento__cell--goals,
+.dashboard-root--overview .overview-bento__cell--advice,
+.dashboard-root--overview .overview-bento__cell--action,
+.dashboard-root--overview .overview-bento__cell--fee-figures {
+  padding: 1.35rem 1.5rem;
+}
+
+/* Tiny text → readable */
+.dashboard-root--overview .muted.small,
+.dashboard-root--overview .small,
+.dashboard-root--overview p.muted {
+  font-size: 0.875rem !important;
+  line-height: 1.55;
+}
+
+/* Tile labels (uppercase caps) */
+.dashboard-root--overview .overview-bento__tile-title {
+  font-size: 1rem !important;
+  margin-bottom: 0.6rem;
+}
+.dashboard-root--overview .overview-bento__tile-title--sub {
+  font-size: 0.8rem !important;
+  margin-bottom: 0.4rem;
+}
+
+/* Fee figures */
+.dashboard-root--overview .overview-fee-figures__label,
+.dashboard-root--overview .overview-fee-figures__save-label {
+  font-size: 0.8rem !important;
+}
+.dashboard-root--overview .overview-fee-figures__target,
+.dashboard-root--overview .overview-fee-figures__save-note {
+  font-size: 0.82rem !important;
+}
+
+/* Fund names & meta */
+.dashboard-root--overview .overview-fund__name {
+  font-size: 0.9rem !important;
+}
+.dashboard-root--overview .overview-fund__meta {
+  font-size: 0.8rem !important;
+}
+
+/* Stamp (timestamp) */
+.dashboard-root--overview .overview-bento__stamp {
+  font-size: 0.8rem !important;
+}
+
+/* Reengage bar */
+.dashboard-root--overview .overview-reengage__text {
+  font-size: 0.875rem !important;
+}
+
+/* Lede paragraphs */
+.dashboard-root--overview .overview-bento__lede,
+.dashboard-root--overview .overview-advice__lead--bento {
+  font-size: 0.9rem !important;
+  line-height: 1.55;
+}
+
+/* Switch list */
+.dashboard-root--overview .overview-switch-list--bento li,
+.dashboard-root--overview .overview-switch-list--bento .overview-switch-list__why {
+  font-size: 0.875rem !important;
+}
+
+/* Color depth — subtle tints per cell type */
+.dashboard-root--overview .overview-bento__cell--head {
+  background: linear-gradient(160deg, rgba(42,77,66,0.04) 0%, #fff 60%);
+}
+.dashboard-root--overview .overview-bento__cell--fee-figures {
+  background: linear-gradient(160deg, rgba(201,154,46,0.05) 0%, #fff 55%);
+}
+.dashboard-root--overview .overview-bento__cell--action {
+  background: linear-gradient(160deg, rgba(42,77,66,0.06) 0%, #fff 55%);
+}
+.dashboard-root--overview .overview-bento__cell--goals {
+  background: linear-gradient(160deg, rgba(74,111,165,0.04) 0%, #fff 55%);
+}
+
+/* Hero section top padding */
+.dashboard-root--overview .overview-hero {
+  padding-top: 2rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Reengage bar padding */
+.dashboard-root--overview .overview-reengage {
+  padding: 0.85rem clamp(1.25rem, 4vw, 2.5rem);
 }

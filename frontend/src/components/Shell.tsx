@@ -33,11 +33,6 @@ export function Shell({ children, variant = 'default', hideFooter = false }: Pro
         )}
       </header>
       <main className={`shell-main${hideFooter ? ' shell-main--fill' : ''}`}>{children}</main>
-      {!hideFooter && (
-        <footer className="shell-footer">
-          <p>Valut · Sparande som följer dina mål</p>
-        </footer>
-      )}
     </div>
   )
 }
