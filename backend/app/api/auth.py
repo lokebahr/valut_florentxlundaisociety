@@ -27,6 +27,21 @@ def _user_public_dict(user: User) -> dict:
     }
 
 
+@bp.post("/mock")
+def mock_sign_in():
+    """Demo login for local development when Tink credentials are not configured."""
+    if Config.TINK_CLIENT_ID and Config.TINK_CLIENT_SECRET:
+        return jsonify({"error": "Mock-inloggning är inaktiverad i produktionsläge."}), 403
+
+    demo_user, _ = User.get_or_create(
+        tink_user_id="demo-user",
+        defaults={"tink_profile_json": '{"demo": true}'},
+    )
+    OnboardingProfile.get_or_create(user=demo_user, defaults={})
+    token = encode_user_token(demo_user.id)
+    return jsonify({"token": token})
+
+
 @bp.get("/me")
 def me():
     user = current_user()

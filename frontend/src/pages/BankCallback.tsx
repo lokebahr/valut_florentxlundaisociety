@@ -35,7 +35,8 @@ export function BankCallback() {
       .then((res) => {
         completedCodes.add(dedupeKey)
         setToken(res.token)
-        navigate('/onboarding?tink=connected')
+        // Hard navigation ensures the token is in localStorage before Protected route checks it
+        window.location.href = '/onboarding?tink=connected'
       })
       .catch((e) => setStatus(e instanceof Error ? e.message : 'Tink-inloggningen misslyckades.'))
   }, [params, navigate, setToken])

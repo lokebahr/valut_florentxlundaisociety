@@ -134,14 +134,61 @@ def _latest_snapshot_payload(user: User) -> dict | None:
     return out
 
 
+@bp.post("/connect-mock")
+def connect_mock():
+    """Synthesise a demo portfolio for local development when Tink is not configured."""
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Ogiltig behörighet."}), 401
+    if Config.TINK_CLIENT_ID and Config.TINK_CLIENT_SECRET:
+        return jsonify({"error": "Mock-koppling är inaktiverad i produktionsläge."}), 403
+
+    from app.services.mock_portfolio import (  # noqa: PLC0415
+        mock_buffer_accounts,
+        mock_normalized_holdings,
+        mock_tink_accounts_payload,
+    )
+
+    holdings = mock_normalized_holdings()
+    profile = _profile_dict(user)
+    liquid_sek = 42_500 + 90_000
+    buffer = analyze_buffer(profile.get("disposable_income_monthly_sek"), liquid_sek)
+    analysis = analyze_holdings(profile, holdings)
+    buffer_accounts = mock_buffer_accounts()
+
+    PortfolioSnapshot.delete().where(PortfolioSnapshot.user == user).execute()
+    PortfolioSnapshot.create(
+        user=user,
+        raw_json=json.dumps(mock_tink_accounts_payload()),
+        normalized_json=json.dumps(
+            {
+                "holdings": holdings,
+                "buffer": buffer,
+                "analysis": analysis,
+                "buffer_accounts": buffer_accounts,
+            }
+        ),
+    )
+
+    return jsonify(
+        {
+            "buffer": buffer,
+            "holdings": holdings,
+            "analysis": analysis,
+            "buffer_accounts": buffer_accounts,
+        }
+    )
+
+
 @bp.get("/link")
 def link_info():
     """Public: URL to start Tink Link (same flow for first-time sign-in and returning users)."""
     if not Config.TINK_CLIENT_ID or not Config.TINK_CLIENT_SECRET:
-        return jsonify({"error": "Tink är inte konfigurerat (TINK_CLIENT_ID / TINK_CLIENT_SECRET)."}), 503
+        return jsonify({"mode": "mock"})
     client = TinkClient()
     return jsonify(
         {
+            "mode": "tink",
             "url": client.build_transactions_link_url(),
             "redirect_uri": Config.TINK_REDIRECT_URI,
         }

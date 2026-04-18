@@ -48,7 +48,7 @@ export function Home() {
         const me = await api<{ onboarding_completed: boolean }>('/api/auth/me')
         navigate(me.onboarding_completed ? '/dashboard' : '/onboarding')
       } catch {
-        navigate('/login')
+        // Token invalid/expired — let the normal page render, user can log in again
       } finally {
         setLoading(false)
       }
