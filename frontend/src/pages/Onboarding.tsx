@@ -215,17 +215,15 @@ const CHART_GRID = [
   { y: 103, label: '+100%', isStart: false },
   { y: 147, label:  '+50%', isStart: false },
   { y: 191, label:    '0%', isStart: true  },
-  { y: 213, label:  '−25%', isStart: false },
   { y: 235, label:  '−50%', isStart: false },
 ] as const
 
 // Scenario charts: −50% to +100%. y(pct) = 235 − (pct + 50) × (220/150)
 const SCENARIO_CHART_GRID = [
-  { y: 18,  label: '+100%', isStart: false },
+  { y: 15,  label: '+100%', isStart: false },
   { y: 88,  label:  '+50%', isStart: false },
   { y: 162, label:    '0%', isStart: true  },
-  { y: 198, label:  '−25%', isStart: false },
-  { y: 232, label:  '−50%', isStart: false },
+  { y: 235, label:  '−50%', isStart: false },
 ] as const
 
 // ── Animation helpers ──────────────────────────────────────────────────────
