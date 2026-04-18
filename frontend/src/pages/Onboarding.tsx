@@ -994,7 +994,24 @@ export function Onboarding() {
 
             <div className="step-nav">
               <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
-              <button type="button" className="btn-primary" onClick={next}>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={async () => {
+                  if (behavioralRisk !== null && behavioralRisk !== riskTolerance) {
+                    setAdjustedRisk(null)
+                    setError(null)
+                    try {
+                      await persistProfile({ adjusted_risk_tolerance: null })
+                      setStep((s) => s + 1)
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : 'Kunde inte spara.')
+                    }
+                  } else {
+                    void next()
+                  }
+                }}
+              >
                 {behavioralRisk !== null && behavioralRisk !== riskTolerance ? 'Behåll mitt val' : 'Nästa'}
               </button>
             </div>
@@ -1292,26 +1309,7 @@ export function Onboarding() {
           <section key={step} className="surface step-animate stack">
             <div>
               <h2>Justera plan</h2>
-              <p className="muted">Din nuvarande profil visas nedan. Justera risknivån om din situation har ändrats.</p>
-            </div>
-
-            <div className="stack stack--tight">
-              <p className="field-label">Justera risk (valfritt)</p>
-              <div className="risk-selector">
-                {RISK_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.level}
-                    type="button"
-                    className={`risk-selector-card${(adjustedRisk ?? riskTolerance) === opt.level ? ' risk-selector-card--selected' : ''}`}
-                    onClick={() => setAdjustedRisk(opt.level === riskTolerance ? null : opt.level)}
-                  >
-                    <span className="risk-selector-card__num">{opt.level}</span>
-                    <span className="risk-selector-card__name">{opt.name}</span>
-                    <span className="risk-selector-card__tagline">{opt.tagline}</span>
-                  </button>
-                ))}
-              </div>
-              <PortfolioChart riskLevel={adjustedRisk ?? riskTolerance} />
+              <p className="muted">Ange ett eventuellt extra månadssparande och se föreslagna fonder.</p>
             </div>
 
             <label>
@@ -1365,6 +1363,31 @@ export function Onboarding() {
             <div>
               <h2>Din portföljanalys</h2>
               <p className="muted">AI-rådgivaren har analyserat din portfölj och dina svar.</p>
+            </div>
+
+            <div className="profile-preview">
+              <p className="profile-preview__label">Din investeringsprofil</p>
+              <p className="profile-preview__name">
+                {RISK_OPTIONS.find((o) => o.level === (adjustedRisk ?? riskTolerance))?.name}
+              </p>
+              <div className="profile-preview__metrics" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                <div className="profile-preview__metric">
+                  <div className="profile-preview__metric-label">Risk</div>
+                  <div className="profile-preview__metric-value">
+                    {adjustedRisk ?? riskTolerance}/{RISK_OPTIONS.length}
+                  </div>
+                </div>
+                <div className="profile-preview__metric">
+                  <div className="profile-preview__metric-label">Horisont</div>
+                  <div className="profile-preview__metric-value">{timeHorizonYears} år</div>
+                </div>
+                <div className="profile-preview__metric">
+                  <div className="profile-preview__metric-label">Mål</div>
+                  <div className="profile-preview__metric-value">
+                    {SAVINGS_PURPOSES.find((p) => p.value === savingsPurpose)?.label ?? savingsPurpose}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {agentResult && !agentResult.error && (
