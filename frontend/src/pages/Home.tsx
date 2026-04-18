@@ -3,6 +3,10 @@ import type { CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
+import imgHero from '../../pictures/bidl3.jpg'
+import imgSkate from '../../pictures/bild1.jpg'
+import imgCelebrate from '../../pictures/bild2.jpg'
+import imgFamily from '../../pictures/bild4.jpg'
 
 function useReveal(threshold = 0.12) {
   const ref = useRef<HTMLDivElement>(null)
@@ -75,6 +79,9 @@ export function Home() {
       </header>
 
       <section className="lp-hero">
+        <div className="lp-hero__bg" aria-hidden>
+          <img src={imgHero} alt="" />
+        </div>
         <div className="lp-hero__inner">
           <div className="lp-eyebrow">Investeringsrådgivning</div>
           <h1 className="lp-hero__h1">
@@ -94,6 +101,7 @@ export function Home() {
 
       <FeaturesSection />
       <HowItWorksSection />
+      <LifestyleSection />
       <StatsSection />
       <TestimonialsSection />
       <CtaSection />
@@ -187,6 +195,37 @@ function HowItWorksSection() {
                 <h3 className="lp-step__title">{s.title}</h3>
                 <p className="lp-step__body">{s.body}</p>
               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LifestyleSection() {
+  const { ref, visible } = useReveal()
+  const items = [
+    { src: imgSkate, alt: 'Person med skateboard', label: 'Dina intressen' },
+    { src: imgCelebrate, alt: 'Vänner skålar', label: 'Dina upplevelser' },
+    { src: imgFamily, alt: 'Familj med barn', label: 'Din familj' },
+  ]
+  return (
+    <div ref={ref} className={`lp-section lp-section--cream lp-reveal${visible ? ' lp-reveal--in' : ''}`}>
+      <div className="lp-wrap">
+        <div className="lp-eyebrow lp-eyebrow--green">Investera i livet du vill leva</div>
+        <h2 className="lp-h2">Sparande med ett syfte</h2>
+        <div className="lp-lifestyle">
+          {items.map((item, i) => (
+            <div
+              className="lp-lifestyle__item"
+              key={item.label}
+              style={{ '--lp-delay': `${i * 0.12}s` } as CSSProperties}
+            >
+              <div className="lp-lifestyle__img">
+                <img src={item.src} alt={item.alt} />
+              </div>
+              <span className="lp-lifestyle__label">{item.label}</span>
             </div>
           ))}
         </div>
