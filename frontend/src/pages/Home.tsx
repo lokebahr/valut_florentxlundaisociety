@@ -3,6 +3,8 @@ import type { CSSProperties } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth'
+
+type TinkLinkInfo = { mode: 'mock' | 'tink'; url?: string }
 import imgHero from '../../pictures/bidl3.jpg'
 import imgSkate from '../../pictures/bild1.jpg'
 import imgCelebrate from '../../pictures/bild2.jpg'
@@ -31,10 +33,11 @@ function useReveal(threshold = 0.12) {
 }
 
 export function Home() {
-  const { token } = useAuth()
+  const { token, setToken } = useAuth()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(!!token)
   const [scrolled, setScrolled] = useState(false)
+  const [authBusy, setAuthBusy] = useState(false)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80)
@@ -56,6 +59,28 @@ export function Home() {
     })()
   }, [token, navigate])
 
+  async function handleDinSida() {
+    if (token) {
+      navigate('/dashboard')
+      return
+    }
+    setAuthBusy(true)
+    try {
+      const info = await api<TinkLinkInfo>('/api/tink/link')
+      if (info.mode === 'mock') {
+        const res = await api<{ token: string }>('/api/auth/mock', { method: 'POST' })
+        setToken(res.token)
+        navigate('/onboarding', { replace: true })
+      } else if (info.url) {
+        window.location.assign(info.url)
+      }
+    } catch {
+      navigate('/register')
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
   if (token && loading) {
     return (
       <div className="lp-loading">
@@ -69,13 +94,14 @@ export function Home() {
       <header className={`lp-nav${scrolled ? ' lp-nav--solid' : ''}`}>
         <Link to="/" className="lp-nav__logo">Valut</Link>
         <nav className="lp-nav__actions">
-          <Link to="/login" className="lp-nav__link">Logga in</Link>
-          <Link
-            to="/register"
+          <button
+            type="button"
             className={`lp-pill${scrolled ? ' lp-pill--accent' : ' lp-pill--white'}`}
+            onClick={handleDinSida}
+            disabled={authBusy}
           >
-            Kom igång
-          </Link>
+            {authBusy ? '…' : 'Din sida'}
+          </button>
         </nav>
       </header>
 
@@ -96,8 +122,14 @@ export function Home() {
             baserat på dina mål, din risktolerans och din ekonomi.
           </p>
           <div className="lp-hero__ctas">
-            <Link to="/register" className="lp-pill lp-pill--white lp-pill--lg">Kom igång gratis</Link>
-            <Link to="/login" className="lp-pill lp-pill--ghost lp-pill--lg">Logga in</Link>
+            <button
+              type="button"
+              className="lp-pill lp-pill--white lp-pill--lg"
+              onClick={handleDinSida}
+              disabled={authBusy}
+            >
+              {authBusy ? 'Laddar…' : 'Din sida →'}
+            </button>
           </div>
         </div>
         <div className="lp-hero__scroll" aria-hidden><span /></div>
@@ -105,20 +137,16 @@ export function Home() {
 
       <FeaturesSection />
       <HowItWorksSection />
-      <VanSection />
+      <VanSection onCta={handleDinSida} busy={authBusy} />
       <LifestyleSection />
       <StatsSection />
       <TestimonialsSection />
-      <CtaSection />
+      <CtaSection onCta={handleDinSida} busy={authBusy} />
 
       <footer className="lp-footer">
         <div className="lp-footer__inner">
           <span className="lp-footer__logo">Valut</span>
           <span>© 2025 Valut · Sparande som följer dina mål</span>
-          <div className="lp-footer__links">
-            <Link to="/login">Logga in</Link>
-            <Link to="/register">Registrera</Link>
-          </div>
         </div>
       </footer>
     </div>
@@ -223,7 +251,7 @@ function HowItWorksSection() {
   )
 }
 
-function VanSection() {
+function VanSection({ onCta, busy }: { onCta: () => void; busy: boolean }) {
   const { ref, visible } = useReveal(0.05)
   return (
     <div ref={ref} className={`lp-split lp-reveal${visible ? ' lp-reveal--in' : ''}`}>
@@ -239,7 +267,9 @@ function VanSection() {
           Bakom varje sparad krona döljer sig en möjlighet — en resa, ett hem, en känsla av frihet.
           Valut hjälper dig att nå dit snabbare.
         </p>
-        <Link to="/register" className="lp-pill lp-pill--white">Kom igång gratis</Link>
+        <button type="button" className="lp-pill lp-pill--white" onClick={onCta} disabled={busy}>
+          {busy ? 'Laddar…' : 'Din sida →'}
+        </button>
       </div>
     </div>
   )
@@ -349,7 +379,7 @@ function TestimonialsSection() {
   )
 }
 
-function CtaSection() {
+function CtaSection({ onCta, busy }: { onCta: () => void; busy: boolean }) {
   const { ref, visible } = useReveal()
   return (
     <div ref={ref} className={`lp-section lp-section--accent lp-reveal${visible ? ' lp-reveal--in' : ''}`}>
@@ -360,9 +390,9 @@ function CtaSection() {
         <p className="lp-cta-lead">
           Kom igång gratis på under två minuter. Inget kreditkort krävs.
         </p>
-        <Link to="/register" className="lp-pill lp-pill--white lp-pill--lg">
-          Skapa konto gratis
-        </Link>
+        <button type="button" className="lp-pill lp-pill--white lp-pill--lg" onClick={onCta} disabled={busy}>
+          {busy ? 'Laddar…' : 'Din sida →'}
+        </button>
       </div>
     </div>
   )
