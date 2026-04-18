@@ -340,7 +340,7 @@ function StatsSection() {
   const { ref, visible } = useReveal()
   const stats = [
     { value: '14000+', label: 'Analyserade portföljer' },
-    { value: '4,8 / 5', label: 'Genomsnittligt betyg' },
+    { value: '98%', label: 'Nöjda användare' },
     { value: '2 min', label: 'Till din första analys' },
     { value: '100%', label: 'Oberoende rådgivning' },
   ]

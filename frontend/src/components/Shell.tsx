@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useAuth } from '../auth'
+import logoSvg from '../../pictures/logo.svg'
 
 type Props = {
   children: ReactNode
@@ -21,7 +22,7 @@ export function Shell({ children, variant = 'default' }: Props) {
     <div className={`shell shell--${variant}`}>
       <header className="shell-header">
         <Link to="/" className="shell-logo">
-          Valut
+          <img src={logoSvg} alt="Valut" className="shell-logo__img" />
         </Link>
         {token && (
           <button className="shell-logout" onClick={handleLogout}>
