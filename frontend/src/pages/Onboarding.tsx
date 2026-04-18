@@ -494,6 +494,20 @@ export function Onboarding() {
   const [error, setError] = useState<string | null>(null)
   const [tinkDebug, setTinkDebug] = useState<unknown>(null)
   const [scenarioAnswers, setScenarioAnswers] = useState<Partial<Record<ScenarioKey, number>>>({})
+  const [enriching, setEnriching] = useState(false)
+
+  type AgentIssue = { holding_name: string; severity: string; problem: string; detail: string; citation: string }
+  type AgentRecommendation = { replaces: string; name: string; rationale: string; improvements: string[] }
+  type AgentResult = {
+    overall_assessment?: string
+    issues?: AgentIssue[]
+    recommendations?: AgentRecommendation[]
+    rebalancing_advice?: string
+    no_alternatives_found?: string
+    error?: string
+  }
+  const [agentResult, setAgentResult] = useState<AgentResult | null>(null)
+  const [agentLoading, setAgentLoading] = useState(false)
 
   useEffect(() => {
     api<{ profile: {
@@ -667,6 +681,36 @@ export function Onboarding() {
       setStep(7)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Anslutningen misslyckades.')
+    }
+  }
+
+  useEffect(() => {
+    if (step !== 10) return
+    setAgentLoading(true)
+    setAgentResult(null)
+    api<AgentResult>('/api/agent/assess', { method: 'POST' })
+      .then(setAgentResult)
+      .catch((e) => setAgentResult({ error: e instanceof Error ? e.message : 'Analysen misslyckades.' }))
+      .finally(() => setAgentLoading(false))
+  }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function enrichAndAdvance() {
+    console.log('[enrichAndAdvance] calling /api/tink/enrich-holdings')
+    setEnriching(true)
+    setError(null)
+    try {
+      const res = await api<{ holdings: ConnectPayload['holdings']; analysis: ConnectPayload['analysis'] }>(
+        '/api/tink/enrich-holdings',
+        { method: 'POST' },
+      )
+      console.log('[enrichAndAdvance] response:', JSON.stringify(res, null, 2))
+      setConnectData((prev) => prev ? { ...prev, holdings: res.holdings, analysis: res.analysis } : prev)
+      setStep(8)
+    } catch (e) {
+      console.error('[enrichAndAdvance] failed:', e)
+      setError(e instanceof Error ? e.message : 'Berikning misslyckades.')
+    } finally {
+      setEnriching(false)
     }
   }
 
@@ -1096,9 +1140,14 @@ export function Onboarding() {
                 </li>
               ))}
             </ul>
+            {enriching && (
+              <p className="muted small step-animate">Hämtar fonddata från faktablad…</p>
+            )}
             <div className="step-nav">
-              <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
-              <button type="button" className="btn-primary" onClick={() => setStep(8)}>Nästa</button>
+              <button type="button" className="btn-ghost" onClick={back} disabled={enriching}>Tillbaka</button>
+              <button type="button" className="btn-primary" onClick={enrichAndAdvance} disabled={enriching}>
+                {enriching ? 'Analyserar fonder…' : 'Nästa'}
+              </button>
             </div>
           </section>
         )}
@@ -1208,18 +1257,75 @@ export function Onboarding() {
           </section>
         )}
 
-        {/* Step 10 — Done */}
+        {/* Step 10 — Done + AI assessment */}
         {step === 10 && (
           <section key={step} className="surface step-animate stack">
             <HeroImage className="hero-image--compact" src={images.forestLight} alt={imageAlt.forestLight} />
             <div>
-              <h2>Du är redo</h2>
-              <p className="muted">
-                Din profil och ett snapshot av portföljen är sparade. På översikten följer vi avstämning över tid.
-              </p>
+              <h2>Din portföljanalys</h2>
+              <p className="muted">AI-rådgivaren har analyserat din portfölj och dina svar.</p>
             </div>
+
+            {agentLoading && (
+              <p className="muted small">Analyserar din portfölj med AI…</p>
+            )}
+
+            {agentResult && !agentResult.error && (
+              <div className="stack">
+                {agentResult.overall_assessment && (
+                  <p>{agentResult.overall_assessment}</p>
+                )}
+                {agentResult.issues && agentResult.issues.length > 0 && (
+                  <div>
+                    <p className="field-label">Identifierade problem</p>
+                    <ul className="issues">
+                      {agentResult.issues.map((issue, idx) => (
+                        <li key={`${issue.problem}-${idx}`} data-severity={issue.severity}>
+                          <strong>{issue.problem}</strong>
+                          <div className="muted small" style={{ marginTop: '0.35rem' }}>{issue.detail}</div>
+                          <div className="muted small" style={{ marginTop: '0.2rem', fontStyle: 'italic' }}>{issue.citation}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {agentResult.recommendations && agentResult.recommendations.length > 0 && (
+                  <div>
+                    <p className="field-label">Rekommenderade byten</p>
+                    <ul className="plain">
+                      {agentResult.recommendations.map((rec) => (
+                        <li key={rec.name} style={{ marginBottom: '1rem' }}>
+                          <strong>{rec.name}</strong>
+                          <span className="muted small"> (ersätter {rec.replaces})</span>
+                          <div className="muted small" style={{ marginTop: '0.25rem' }}>{rec.rationale}</div>
+                          {rec.improvements.length > 0 && (
+                            <ul className="plain muted small" style={{ marginTop: '0.25rem', paddingLeft: '1rem' }}>
+                              {rec.improvements.map((imp) => <li key={imp}>• {imp}</li>)}
+                            </ul>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {agentResult.rebalancing_advice && (
+                  <div>
+                    <p className="field-label">Ombalansering</p>
+                    <p className="muted small">{agentResult.rebalancing_advice}</p>
+                  </div>
+                )}
+                {agentResult.no_alternatives_found && (
+                  <p className="muted small">{agentResult.no_alternatives_found}</p>
+                )}
+              </div>
+            )}
+
+            {agentResult?.error && (
+              <p className="muted small">Kunde inte hämta AI-analys: {agentResult.error}</p>
+            )}
+
             <form onSubmit={finishOnboarding}>
-              <button type="submit" className="btn-primary">
+              <button type="submit" className="btn-primary" disabled={agentLoading}>
                 Öppna översikt
               </button>
             </form>
