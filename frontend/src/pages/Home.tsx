@@ -306,27 +306,50 @@ function LifestyleSection() {
   )
 }
 
+function useCountUp(target: number, active: boolean, duration = 1600) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    if (!active) return
+    const start = performance.now()
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1)
+      const ease = 1 - Math.pow(1 - t, 3)
+      setCount(Math.floor(ease * target))
+      if (t < 1) requestAnimationFrame(tick)
+      else setCount(target)
+    }
+    requestAnimationFrame(tick)
+  }, [target, active, duration])
+  return count
+}
+
+function AnimatedStat({ value, label, delay, active }: { value: string; label: string; delay: number; active: boolean }) {
+  const numeric = parseInt(value.replace(/\D/g, ''), 10)
+  const suffix = value.replace(/[\d\s]/g, '')
+  const count = useCountUp(isNaN(numeric) ? 0 : numeric, active)
+  const display = isNaN(numeric) ? value : `${count.toLocaleString('sv-SE')}${suffix}`
+  return (
+    <div className="lp-stat" style={{ '--lp-delay': `${delay}s` } as CSSProperties}>
+      <div className="lp-stat__value">{display}</div>
+      <div className="lp-stat__label">{label}</div>
+    </div>
+  )
+}
+
 function StatsSection() {
   const { ref, visible } = useReveal()
   const stats = [
-    { value: '14 000+', label: 'Analyserade portföljer' },
+    { value: '14000+', label: 'Analyserade portföljer' },
     { value: '4,8 / 5', label: 'Genomsnittligt betyg' },
     { value: '2 min', label: 'Till din första analys' },
-    { value: '100 %', label: 'Oberoende rådgivning' },
+    { value: '100%', label: 'Oberoende rådgivning' },
   ]
   return (
     <div ref={ref} className={`lp-section lp-section--cream lp-reveal${visible ? ' lp-reveal--in' : ''}`}>
       <div className="lp-wrap">
         <div className="lp-stats">
           {stats.map((s, i) => (
-            <div
-              className="lp-stat"
-              key={s.label}
-              style={{ '--lp-delay': `${i * 0.1}s` } as CSSProperties}
-            >
-              <div className="lp-stat__value">{s.value}</div>
-              <div className="lp-stat__label">{s.label}</div>
-            </div>
+            <AnimatedStat key={s.label} value={s.value} label={s.label} delay={i * 0.1} active={visible} />
           ))}
         </div>
       </div>

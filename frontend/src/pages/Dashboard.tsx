@@ -63,6 +63,57 @@ type MontrosePrepareResponse = {
 
 type Tab = 'overview' | 'profile' | 'tracker'
 
+// ── Gamification helpers ─────────────────────────────────────────
+function computeHealthScore(data: Overview, hasGoal: boolean): number {
+  let score = 0
+  if (data.holdings.length > 0) score += 20
+  const highAlerts = data.alerts.filter(a => a.severity === 'high').length
+  const medAlerts = data.alerts.filter(a => a.severity === 'medium').length
+  score += Math.max(0, 25 - highAlerts * 13)
+  score += Math.max(0, 15 - medAlerts * 8)
+  const avgFee = data.holdings.length > 0
+    ? data.holdings.reduce((s, h) => s + Number(h.ongoing_fee_pct || 0), 0) / data.holdings.length
+    : 1
+  if (avgFee < 0.3) score += 15
+  else if (avgFee < 0.6) score += 10
+  if (hasGoal) score += 10
+  if (data.profile.monthly_contribution_sek && data.profile.monthly_contribution_sek > 0) score += 15
+  return Math.min(100, score)
+}
+
+function getLevel(score: number) {
+  if (score >= 80) return { name: 'Mästare',     color: '#c99a2e', nextAt: null }
+  if (score >= 60) return { name: 'Strateg',      color: '#2a4d42', nextAt: 80 }
+  if (score >= 40) return { name: 'Investerare',  color: '#4a7c6c', nextAt: 60 }
+  if (score >= 20) return { name: 'Sparare',      color: '#6b9e90', nextAt: 40 }
+  return              { name: 'Nybörjare',       color: '#9fb8b2', nextAt: 20 }
+}
+
+function HealthRing({ score }: { score: number }) {
+  const [live, setLive] = useState(0)
+  useEffect(() => { const t = setTimeout(() => setLive(score), 120); return () => clearTimeout(t) }, [score])
+  const r = 46
+  const circ = 2 * Math.PI * r
+  const offset = circ * (1 - live / 100)
+  const stroke = live >= 75 ? 'var(--accent)' : live >= 45 ? '#e8a838' : '#c0392b'
+  return (
+    <div className="health-ring">
+      <svg width="112" height="112" viewBox="0 0 112 112" aria-hidden>
+        <circle cx="56" cy="56" r={r} fill="none" stroke="var(--border)" strokeWidth="9" />
+        <circle cx="56" cy="56" r={r} fill="none" stroke={stroke} strokeWidth="9"
+          strokeLinecap="round" strokeDasharray={String(circ)} strokeDashoffset={String(offset)}
+          transform="rotate(-90 56 56)"
+          style={{ transition: 'stroke-dashoffset 1.3s cubic-bezier(0.34,1.2,0.64,1), stroke 0.5s' }}
+        />
+      </svg>
+      <div className="health-ring__center">
+        <span className="health-ring__score">{score}</span>
+        <span className="health-ring__denom">/ 100</span>
+      </div>
+    </div>
+  )
+}
+
 function montroseTradeUrl(decoded: unknown): string | null {
   if (decoded && typeof decoded === 'object' && 'url' in decoded) {
     const u = (decoded as { url: unknown }).url
@@ -231,6 +282,63 @@ export function Dashboard() {
     )
   }
 
+  const hasGoal = !!localStorage.getItem('valut_goal')
+  const healthScore = computeHealthScore(data, hasGoal)
+  const level = getLevel(healthScore)
+
+  const avgFee = data.holdings.length > 0
+    ? data.holdings.reduce((s, h) => s + Number(h.ongoing_fee_pct || 0), 0) / data.holdings.length
+    : 1
+  const targets = (data.analysis as { profile_targets?: Record<string, number> }).profile_targets
+  const equityDrift = targets
+    ? Math.abs((targets.actual_equity_share - targets.target_equity_share) * 100)
+    : 99
+
+  const achievements = [
+    {
+      id: 'first',
+      unlocked: data.holdings.length > 0,
+      title: 'Första steget',
+      desc: 'Kopplad portfölj',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
+    },
+    {
+      id: 'monthly',
+      unlocked: (data.profile.monthly_contribution_sek ?? 0) > 0,
+      title: 'Aktiv sparare',
+      desc: 'Månadsspar aktivt',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>,
+    },
+    {
+      id: 'lowfee',
+      unlocked: avgFee < 0.5 && data.holdings.length > 0,
+      title: 'Kostnadssmart',
+      desc: 'Avgifter under 0,5 %',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+    },
+    {
+      id: 'balanced',
+      unlocked: equityDrift < 10 && data.holdings.length > 0,
+      title: 'Välbalanserad',
+      desc: 'Aktieandel nära målet',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
+    },
+    {
+      id: 'goal',
+      unlocked: hasGoal,
+      title: 'Målmedveten',
+      desc: 'Sparmål inställt',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+    },
+    {
+      id: 'clean',
+      unlocked: data.alerts.filter(a => a.severity === 'high').length === 0,
+      title: 'Ren portfölj',
+      desc: 'Inga kritiska larm',
+      svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>,
+    },
+  ]
+
   const analysis = data.analysis as {
     profile_targets?: Record<string, number>
     issues?: { title: string; body: string; severity?: string }[]
@@ -294,6 +402,48 @@ export function Dashboard() {
                 </dl>
               </div>
             </div>
+
+            <div className="surface step-animate health-surface">
+              <div className="health-card">
+                <HealthRing score={healthScore} />
+                <div className="health-card__body">
+                  <div className="level-badge" style={{ '--level-color': level.color } as React.CSSProperties}>
+                    {level.name}
+                  </div>
+                  <p className="health-card__desc muted small">
+                    {healthScore >= 80
+                      ? 'Exceptionellt! Din portfölj är i toppskick.'
+                      : healthScore >= 60
+                      ? 'Bra jobbat — ett par justeringar tar dig till toppen.'
+                      : healthScore >= 40
+                      ? 'Bra start. Förbättra avgifter och balans för att klättra.'
+                      : 'Koppla bank, sätt ett månadsspar och välj mål för att lyfta.'}
+                  </p>
+                  {level.nextAt !== null && (
+                    <div className="level-progress">
+                      <div className="level-progress__track">
+                        <div className="level-progress__fill" style={{ width: `${((healthScore - (level.nextAt - 20)) / 20) * 100}%` }} />
+                      </div>
+                      <span className="level-progress__label muted small">{level.nextAt - healthScore} poäng till nästa nivå</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <section className="surface step-animate">
+              <h2>Prestationer</h2>
+              <div className="achievement-grid">
+                {achievements.map(a => (
+                  <div key={a.id} className={`achievement${a.unlocked ? ' achievement--unlocked' : ''}`}>
+                    <div className="achievement__icon">{a.svg}</div>
+                    <div className="achievement__name">{a.title}</div>
+                    <div className="achievement__desc">{a.desc}</div>
+                    {a.unlocked && <div className="achievement__check" aria-label="Upplåst" />}
+                  </div>
+                ))}
+              </div>
+            </section>
 
             {showMontrosePrepare && (
               <section className="surface step-animate montrose-dash">
@@ -493,7 +643,7 @@ export function Dashboard() {
           </div>
         )}
 
-        {tab === 'tracker' && <TrackerTab holdings={data.holdings} />}
+        {tab === 'tracker' && <TrackerTab holdings={data.holdings} monthlySek={data.profile.monthly_contribution_sek} />}
       </div>
       </Shell>
       {montroseResult ? <MontroseTicketsModal result={montroseResult} onClose={closeMontroseModal} /> : null}
@@ -556,7 +706,7 @@ const GOALS: Record<GoalType, { label: string; svg: React.ReactNode }> = {
   },
 }
 
-function TrackerTab({ holdings }: { holdings: Record<string, unknown>[] }) {
+function TrackerTab({ holdings, monthlySek }: { holdings: Record<string, unknown>[]; monthlySek: number | null }) {
   const [goal, setGoal] = useState<SavedGoal | null>(() => {
     try { return JSON.parse(localStorage.getItem('valut_goal') || 'null') }
     catch { return null }
@@ -657,6 +807,9 @@ function TrackerTab({ holdings }: { holdings: Record<string, unknown>[] }) {
                 className={`goal-progress__fill${reached ? ' goal-progress__fill--done' : ''}`}
                 style={{ width: '0%' }}
               />
+              {[25, 50, 75].map(m => (
+                <div key={m} className={`goal-progress__milestone${pct >= m ? ' goal-progress__milestone--passed' : ''}`} style={{ left: `${m}%` }} title={`${m} %`} />
+              ))}
             </div>
             <div className={`goal-progress__icon${reached ? ' goal-progress__icon--reached' : ''}`}>
               {def.svg}
@@ -673,7 +826,30 @@ function TrackerTab({ holdings }: { holdings: Record<string, unknown>[] }) {
               <div className="goal-progress__label-sub muted small">{def.label}</div>
             </div>
           </div>
-        </div>
+
+          {!reached && (() => {
+            const remaining = goal!.targetSek - totalValue
+            if (monthlySek && monthlySek > 0 && remaining > 0) {
+              const months = Math.ceil(remaining / monthlySek)
+              const years = Math.floor(months / 12)
+              const mo = months % 12
+              const timeStr = years > 0
+                ? `${years} år${mo > 0 ? ` ${mo} mån` : ''}`
+                : `${months} mån`
+              return (
+                <div className="goal-eta">
+                  <span className="goal-eta__val">{timeStr}</span>
+                  <span className="goal-eta__label muted small">kvar vid {monthlySek.toLocaleString('sv-SE')} kr/mån</span>
+                  <span className="goal-eta__remaining muted small">{remaining.toLocaleString('sv-SE')} kr kvar</span>
+                </div>
+              )
+            }
+            return (
+              <p className="muted small" style={{ marginTop: '0.75rem' }}>
+                Sätt ett månadsspar i Profil för att se tid till målet.
+              </p>
+            )
+          })()}</div>
       </div>
 
       <section className="surface step-animate">
