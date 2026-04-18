@@ -49,6 +49,68 @@ def _profile_dict(user: User) -> dict:
     }
 
 
+def refresh_snapshot_from_holdings_service(user: User) -> None:
+    """
+    Re-fetch accounts from ``HOLDINGS_SERVICE_URL`` and append a new ``PortfolioSnapshot``.
+    Overview uses the latest snapshot, so holdings/buffer/analysis match the mock after allocation apply.
+    """
+    if not (Config.HOLDINGS_SERVICE_URL or "").strip():
+        raise HoldingsServiceError("HOLDINGS_SERVICE_URL is not set")
+
+    accounts = fetch_tink_shaped_accounts(user_id=user.id)
+    holdings = normalize_holdings(accounts, use_mock_enrichment=False)
+    liquid = sum_liquid_sek_from_accounts(accounts)
+    profile = _profile_dict(user)
+    buffer = analyze_buffer(profile.get("disposable_income_monthly_sek"), liquid)
+    analysis = analyze_holdings(profile, holdings)
+    buffer_accounts = list_liquid_accounts(accounts)
+
+    prev = (
+        PortfolioSnapshot.select()
+        .where(PortfolioSnapshot.user == user)
+        .order_by(PortfolioSnapshot.created_at.desc())
+        .first()
+    )
+    tink_debug: dict[str, Any] = {
+        "holdings_service": True,
+        "holdings_service_user_id": user.id,
+        "holdings_service_refresh": True,
+        "tink_transactions": [],
+        "tink_oauth_token": {},
+        "credentials_id": "",
+    }
+    if prev:
+        try:
+            prev_norm = json.loads(prev.normalized_json)
+            old_td = prev_norm.get("tink_debug")
+            if isinstance(old_td, dict):
+                tok = old_td.get("tink_oauth_token")
+                if tok:
+                    tink_debug["tink_oauth_token"] = tok
+                if "credentials_id" in old_td:
+                    tink_debug["credentials_id"] = old_td.get("credentials_id") or ""
+                tx = old_td.get("tink_transactions")
+                if tx is not None:
+                    tink_debug["tink_transactions"] = tx
+        except (json.JSONDecodeError, TypeError, AttributeError):
+            pass
+
+    PortfolioSnapshot.create(
+        user=user,
+        raw_json=json.dumps(accounts, ensure_ascii=False),
+        normalized_json=json.dumps(
+            {
+                "holdings": holdings,
+                "buffer": buffer,
+                "analysis": analysis,
+                "buffer_accounts": buffer_accounts,
+                "tink_debug": tink_debug,
+            },
+            ensure_ascii=False,
+        ),
+    )
+
+
 def sync_portfolio_for_user(
     user: User,
     client: TinkClient,

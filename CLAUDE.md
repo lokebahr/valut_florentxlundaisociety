@@ -50,7 +50,7 @@ Steps 1–2 collect the investor profile (risk cards, horizon, purpose, finances
 SQLite via Peewee ORM. Tables are created automatically on startup (`app/database.py`). There are no migration scripts — schema changes require dropping and recreating `valut.db`.
 
 ### Mock vs. real Tink
-`TINK_USE_MOCK=true` causes `/api/tink/link` to return `{mode:"mock"}` and `/api/tink/connect-mock` to synthesise two mock ISK holdings (Nordea Global Climate Impact + SEB Sverige Indexfond) with realistic metadata. The real Tink path requires `TINK_CLIENT_ID` + `TINK_CLIENT_SECRET` and uses the Tink Link OAuth2 flow with a redirect to `/onboarding/bank-callback`.
+`TINK_USE_MOCK=true` causes `/api/tink/link` to return `{mode:"mock"}` and `/api/tink/connect-mock` to synthesise two mock ISK holdings (Europe Small Cap Class A-sek LU1916064857 + Franklin Sustainable Global Growth Fund LU0390134368) with realistic metadata. The real Tink path requires `TINK_CLIENT_ID` + `TINK_CLIENT_SECRET` and uses the Tink Link OAuth2 flow with a redirect to `/onboarding/bank-callback`.
 
 ### Styling
 All CSS is hand-written in `frontend/src/index.css` — no utility framework. Design tokens live in `:root` (colors, radius, font families, shadows). The two font families are `DM Sans` (body) and `Fraunces` (display/headings). Add new component styles at the bottom of `index.css` following the existing pattern.

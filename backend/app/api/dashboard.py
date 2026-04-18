@@ -10,6 +10,8 @@ from app.config import Config
 from app.models import FundOrder, MontroseConnection, OnboardingProfile, PortfolioSnapshot, RebalanceAlert
 from app.services.montrose_mcp import McpError, McpToolError, MontroseMcpClient, MontroseMcpConfig
 from app.services.montrose_oauth import MontroseAuthError, get_valid_montrose_access_token
+from app.api.tink import refresh_snapshot_from_holdings_service
+from app.services.holdings_service_client import HoldingsServiceError, notify_recommended_allocation_applied
 from app.services.portfolio_analysis import (
     analyze_holdings,
     build_montrose_buy_plan,
@@ -175,6 +177,23 @@ def montrose_prepare_switch():
     except McpError as exc:
         return jsonify({"error": "Montrose MCP misslyckades.", "detail": str(exc)}), 502
 
+    holdings_mock_updated = False
+    snapshot_refreshed = False
+    if (Config.HOLDINGS_SERVICE_URL or "").strip():
+        try:
+            teq_plan = float(plan.get("target_equity_share") or 0.5)
+            notify_recommended_allocation_applied(user_id=user.id, target_equity_share=teq_plan)
+            holdings_mock_updated = True
+        except HoldingsServiceError:
+            holdings_mock_updated = False
+
+        if holdings_mock_updated:
+            try:
+                refresh_snapshot_from_holdings_service(user)
+                snapshot_refreshed = True
+            except HoldingsServiceError:
+                snapshot_refreshed = False
+
     return jsonify(
         {
             "plan": {
@@ -185,6 +204,8 @@ def montrose_prepare_switch():
             },
             "buys": results,
             "message": "Köpbiljett(er) skapade i Montrose. Slutför i Montrose / din bank enligt deras flöde.",
+            "holdings_mock_updated": holdings_mock_updated,
+            "snapshot_refreshed": snapshot_refreshed,
         }
     )
 

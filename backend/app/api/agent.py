@@ -47,6 +47,8 @@ def run_assessment():
         holdings = mock_normalized_holdings()
 
     result = assess(profile, holdings)
+    if result.get("error") == "missing_api_key":
+        return jsonify(result), 503
     return jsonify(result)
 
 
@@ -57,4 +59,6 @@ def debug_assessment():
     profile = body.get("profile", {})
     holdings = body.get("holdings", mock_normalized_holdings())
     result = assess(profile, holdings)
+    if result.get("error") == "missing_api_key":
+        return jsonify(result), 503
     return jsonify(result)

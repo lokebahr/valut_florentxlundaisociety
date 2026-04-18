@@ -44,3 +44,26 @@ def fetch_tink_shaped_accounts(*, user_id: int | None = None) -> dict[str, Any]:
         raise HoldingsServiceError("Holdings service must return a JSON object with an 'accounts' array")
 
     return data
+
+
+def notify_recommended_allocation_applied(*, user_id: int, target_equity_share: float) -> None:
+    """
+    POST ``{HOLDINGS_SERVICE_URL}/v1/apply-recommended-allocation`` so the mock (or future provider)
+    can reflect that the user switched to the recommended LF split.
+    """
+    base = (Config.HOLDINGS_SERVICE_URL or "").strip().rstrip("/")
+    if not base:
+        return
+
+    url = f"{base}/v1/apply-recommended-allocation"
+    try:
+        r = requests.post(
+            url,
+            json={"user_id": user_id, "target_equity_share": float(target_equity_share)},
+            timeout=Config.HOLDINGS_SERVICE_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        raise HoldingsServiceError(str(exc)) from exc
+
+    if not r.ok:
+        raise HoldingsServiceError(f"HTTP {r.status_code}: {(r.text or '')[:800]}")

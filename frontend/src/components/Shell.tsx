@@ -7,9 +7,11 @@ type Props = {
   children: ReactNode
   /** Om satt visas en tunn accent under sidhuvudet */
   variant?: 'default' | 'minimal'
+  /** Dölj sidfot (t.ex. helskärmsöversikt) */
+  hideFooter?: boolean
 }
 
-export function Shell({ children, variant = 'default' }: Props) {
+export function Shell({ children, variant = 'default', hideFooter = false }: Props) {
   const { token, setToken } = useAuth()
   const navigate = useNavigate()
 
@@ -30,10 +32,12 @@ export function Shell({ children, variant = 'default' }: Props) {
           </button>
         )}
       </header>
-      <main className="shell-main">{children}</main>
-      <footer className="shell-footer">
-        <p>Valut · Sparande som följer dina mål</p>
-      </footer>
+      <main className={`shell-main${hideFooter ? ' shell-main--fill' : ''}`}>{children}</main>
+      {!hideFooter && (
+        <footer className="shell-footer">
+          <p>Valut · Sparande som följer dina mål</p>
+        </footer>
+      )}
     </div>
   )
 }

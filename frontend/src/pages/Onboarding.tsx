@@ -496,14 +496,17 @@ export function Onboarding() {
   const [scenarioAnswers, setScenarioAnswers] = useState<Partial<Record<ScenarioKey, number>>>({})
   const [enriching, setEnriching] = useState(false)
 
-  type AgentIssue = { holding_name: string; severity: string; problem: string; detail: string; citation: string }
-  type AgentRecommendation = { replaces: string; name: string; rationale: string; improvements: string[] }
+  type AgentIssue = {
+    holding_name?: string
+    severity?: string
+    category?: string
+    problem: string
+    detail: string
+    citation: string
+  }
   type AgentResult = {
     overall_assessment?: string
     issues?: AgentIssue[]
-    recommendations?: AgentRecommendation[]
-    rebalancing_advice?: string
-    no_alternatives_found?: string
     error?: string
   }
   const [agentResult, setAgentResult] = useState<AgentResult | null>(null)
@@ -1281,6 +1284,9 @@ export function Onboarding() {
                     <ul className="issues">
                       {agentResult.issues.map((issue, idx) => (
                         <li key={`${issue.problem}-${idx}`} data-severity={issue.severity}>
+                          {issue.holding_name && (
+                            <div className="muted small" style={{ marginBottom: '0.25rem' }}>{issue.holding_name}</div>
+                          )}
                           <strong>{issue.problem}</strong>
                           <div className="muted small" style={{ marginTop: '0.35rem' }}>{issue.detail}</div>
                           <div className="muted small" style={{ marginTop: '0.2rem', fontStyle: 'italic' }}>{issue.citation}</div>
@@ -1288,34 +1294,6 @@ export function Onboarding() {
                       ))}
                     </ul>
                   </div>
-                )}
-                {agentResult.recommendations && agentResult.recommendations.length > 0 && (
-                  <div>
-                    <p className="field-label">Rekommenderade byten</p>
-                    <ul className="plain">
-                      {agentResult.recommendations.map((rec) => (
-                        <li key={rec.name} style={{ marginBottom: '1rem' }}>
-                          <strong>{rec.name}</strong>
-                          <span className="muted small"> (ersätter {rec.replaces})</span>
-                          <div className="muted small" style={{ marginTop: '0.25rem' }}>{rec.rationale}</div>
-                          {rec.improvements.length > 0 && (
-                            <ul className="plain muted small" style={{ marginTop: '0.25rem', paddingLeft: '1rem' }}>
-                              {rec.improvements.map((imp) => <li key={imp}>• {imp}</li>)}
-                            </ul>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {agentResult.rebalancing_advice && (
-                  <div>
-                    <p className="field-label">Ombalansering</p>
-                    <p className="muted small">{agentResult.rebalancing_advice}</p>
-                  </div>
-                )}
-                {agentResult.no_alternatives_found && (
-                  <p className="muted small">{agentResult.no_alternatives_found}</p>
                 )}
               </div>
             )}
