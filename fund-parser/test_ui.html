@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fund Parser</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0d0d0d;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 0;
+  }
+
+  header {
+    grid-column: 1 / -1;
+    padding: 1.2rem 2rem;
+    border-bottom: 1px solid #222;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  header h1 { font-size: 1rem; font-weight: 600; color: #fff; letter-spacing: 0.05em; }
+  header span { font-size: 0.75rem; color: #555; }
+
+  .panel {
+    padding: 2rem;
+    border-right: 1px solid #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto;
+    height: calc(100vh - 57px);
+  }
+  .panel:last-child { border-right: none; }
+
+  .panel-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #555;
+  }
+
+  /* Drop zone */
+  #dropzone {
+    border: 1.5px dashed #2a2a2a;
+    border-radius: 10px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  #dropzone:hover, #dropzone.drag-over {
+    border-color: #4a90d9;
+    background: rgba(74,144,217,0.04);
+  }
+  #dropzone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  #dropzone .dz-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+  #dropzone .dz-label { font-size: 0.85rem; color: #666; }
+  #dropzone .dz-label strong { color: #4a90d9; }
+  #dropzone .dz-sub { font-size: 0.7rem; color: #444; margin-top: 0.3rem; }
+
+  #file-name {
+    font-size: 0.75rem;
+    color: #777;
+    text-align: center;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    padding: 0.65rem 1.2rem;
+    transition: opacity 0.15s;
+  }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  #parse-btn {
+    background: #4a90d9;
+    color: #fff;
+    width: 100%;
+  }
+  #parse-btn:hover:not(:disabled) { opacity: 0.85; }
+
+  #status {
+    font-size: 0.78rem;
+    min-height: 1rem;
+    color: #888;
+    text-align: center;
+  }
+  #status.error { color: #e05c5c; }
+  #status.ok { color: #5cb85c; }
+
+  /* Result card */
+  .result-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-size: 0.8rem;
+  }
+
+  .fund-card {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .fund-card-header {
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid #1e1e1e;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .fund-card-header .fund-name { font-size: 0.9rem; font-weight: 600; color: #fff; }
+  .fund-card-header .fund-isin { font-size: 0.7rem; color: #555; margin-top: 0.2rem; font-family: monospace; }
+  .badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge.cached { background: #1a2e1a; color: #5cb85c; }
+  .badge.fresh  { background: #1a2340; color: #4a90d9; }
+
+  .fund-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .fund-field {
+    padding: 0.65rem 1.2rem;
+    border-bottom: 1px solid #1a1a1a;
+    border-right: 1px solid #1a1a1a;
+  }
+  .fund-field:nth-child(even) { border-right: none; }
+  .fund-field .field-label { font-size: 0.62rem; color: #555; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem; }
+  .fund-field .field-value { font-size: 0.82rem; color: #ddd; font-weight: 500; }
+  .fund-field .field-value.null { color: #3a3a3a; font-style: italic; }
+
+  .type-section { padding: 0.8rem 1.2rem; border-bottom: 1px solid #1a1a1a; }
+  .type-section .section-label { font-size: 0.62rem; color: #555; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem; }
+  .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+  .type-chip { background: #111; border: 1px solid #1e1e1e; border-radius: 5px; padding: 0.45rem 0.7rem; }
+  .type-chip .tc-label { font-size: 0.58rem; color: #555; margin-bottom: 0.15rem; }
+  .type-chip .tc-val { font-size: 0.78rem; color: #ddd; font-weight: 500; }
+  .type-chip .tc-val.null { color: #333; font-style: italic; font-weight: 400; }
+  .type-badge { display: inline-block; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 3px; margin-left: 0.5rem; vertical-align: middle; }
+  .type-equity { background: #1a2340; color: #4a90d9; }
+  .type-bond   { background: #1a2e1a; color: #5cb85c; }
+  .type-mixed  { background: #2e2510; color: #d4a843; }
+
+  .scenarios-section { padding: 0.8rem 1.2rem; }
+  .scenarios-section .section-label { font-size: 0.62rem; color: #555; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem; }
+  .scenarios-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; }
+  .scenario-box { background: #0f0f0f; border: 1px solid #1e1e1e; border-radius: 5px; padding: 0.5rem; text-align: center; }
+  .scenario-box .s-label { font-size: 0.58rem; color: #555; margin-bottom: 0.25rem; }
+  .scenario-box .s-val { font-size: 0.82rem; font-weight: 600; font-family: monospace; }
+  .s-val.pos { color: #5cb85c; }
+  .s-val.neg { color: #e05c5c; }
+  .s-val.null { color: #333; font-size: 0.7rem; }
+
+  /* DB panel */
+  #db-btn {
+    background: #1e1e1e;
+    color: #aaa;
+    border: 1px solid #2a2a2a;
+    width: 100%;
+  }
+  #db-btn:hover:not(:disabled) { background: #252525; color: #ddd; }
+
+  .db-empty { color: #444; font-size: 0.78rem; text-align: center; padding: 2rem; }
+
+  .db-fund-row {
+    background: #141414;
+    border: 1px solid #1e1e1e;
+    border-radius: 7px;
+    padding: 0.9rem 1.1rem;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .db-fund-row:hover { border-color: #333; }
+  .db-fund-row .row-name { font-size: 0.82rem; font-weight: 500; color: #ddd; }
+  .db-fund-row .row-meta { font-size: 0.68rem; color: #555; margin-top: 0.15rem; font-family: monospace; }
+  .db-fund-row .row-fee {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #4a90d9;
+    text-align: right;
+  }
+  .db-fund-row .row-fee span { display: block; font-size: 0.58rem; color: #555; font-weight: 400; }
+
+  .db-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .bracket {  }
+  .bracket-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.4rem 0.2rem;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .bracket-label::after { content: ''; flex: 1; height: 1px; background: currentColor; opacity: 0.15; }
+  .bracket-equity .bracket-label { color: #4a90d9; }
+  .bracket-mixed  .bracket-label { color: #d4a843; }
+  .bracket-bonds  .bracket-label { color: #5cb85c; }
+  .brackets { display: flex; flex-direction: column; gap: 1.2rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fund Parser</h1>
+  <span>dev test interface</span>
+</header>
+
+<!-- Left: Upload + parse result -->
+<div class="panel" id="left-panel">
+  <div class="panel-title">Parse PDF</div>
+
+  <div id="dropzone">
+    <input type="file" accept="application/pdf" id="file-input" onchange="onFileSelect(this)">
+    <div class="dz-icon">📄</div>
+    <div class="dz-label">Drop a fund factsheet here<br>or <strong>click to browse</strong></div>
+    <div class="dz-sub">PDF only</div>
+  </div>
+
+  <div id="file-name">No file selected</div>
+
+  <button id="parse-btn" onclick="parseFile()" disabled>Parse Fund</button>
+  <div id="status"></div>
+
+  <div id="result-area">
+    <div class="result-empty">Parsed fund will appear here</div>
+  </div>
+</div>
+
+<!-- Right: DB viewer -->
+<div class="panel" id="right-panel">
+  <div class="panel-title">Database</div>
+  <button id="db-btn" onclick="loadDB()">⟳ Load funds from DB</button>
+  <div id="db-area"><div class="db-empty">Click to load stored funds</div></div>
+</div>
+
+<script>
+const API = 'http://localhost:8001';
+let selectedFile = null;
+
+// Drag and drop
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type === 'application/pdf') setFile(f);
+  else setStatus('Only PDF files are supported.', 'error');
+});
+
+function onFileSelect(input) {
+  if (input.files[0]) setFile(input.files[0]);
+}
+
+function setFile(f) {
+  selectedFile = f;
+  document.getElementById('file-name').textContent = f.name;
+  document.getElementById('parse-btn').disabled = false;
+  setStatus('');
+}
+
+async function parseFile() {
+  if (!selectedFile) return;
+  const btn = document.getElementById('parse-btn');
+  btn.disabled = true;
+  setStatus('Parsing…');
+
+  try {
+    const form = new FormData();
+    form.append('file', selectedFile);
+    const res = await fetch(`${API}/funds/parse`, { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok) { setStatus((data.detail || JSON.stringify(data)), 'error'); return; }
+    renderFundCard(data.fund, data.cached, 'result-area');
+    setStatus(data.cached ? 'Returned from cache.' : 'Parsed and stored.', 'ok');
+  } catch(e) {
+    setStatus('Request failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function bracket(f) {
+  const eq = f.equity_share ?? 0;
+  const bo = f.bond_share ?? 0;
+  if (eq >= 0.8) return 'equity';
+  if (bo >= 0.6) return 'bonds';
+  return 'mixed';
+}
+
+function fundRowHtml(f) {
+  return `
+    <div class="db-fund-row" onclick="showDbFund('${f.isin}')">
+      <div>
+        <div class="row-name">${f.name}</div>
+        <div class="row-meta">${f.isin} &middot; ${f.registration_country || f.domicile || '?'} &middot; ${f.base_currency || '?'} &middot; Risk ${f.risk_indicator ?? '?'}/7</div>
+      </div>
+      <div class="row-fee">
+        ${f.ongoing_fee_pct != null ? f.ongoing_fee_pct.toFixed(2) + '%' : '—'}
+        <span>fee/yr</span>
+      </div>
+    </div>`;
+}
+
+function bracketHtml(label, funds, cls) {
+  if (!funds.length) return '';
+  return `
+    <div class="bracket ${cls}">
+      <div class="bracket-label">${label} (${funds.length})</div>
+      <div class="db-list">${funds.map(fundRowHtml).join('')}</div>
+    </div>`;
+}
+
+async function loadDB() {
+  const btn = document.getElementById('db-btn');
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+  try {
+    const res = await fetch(`${API}/funds/`);
+    const funds = await res.json();
+    const area = document.getElementById('db-area');
+    if (!funds.length) {
+      area.innerHTML = '<div class="db-empty">No funds stored yet.</div>';
+      return;
+    }
+    const equity = funds.filter(f => bracket(f) === 'equity');
+    const mixed  = funds.filter(f => bracket(f) === 'mixed');
+    const bonds  = funds.filter(f => bracket(f) === 'bonds');
+    area.innerHTML = `<div class="brackets">
+      ${bracketHtml('Equity', equity, 'bracket-equity')}
+      ${bracketHtml('Mixed', mixed, 'bracket-mixed')}
+      ${bracketHtml('Bonds', bonds, 'bracket-bonds')}
+    </div>`;
+  } catch(e) {
+    document.getElementById('db-area').innerHTML = `<div class="db-empty">Error: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⟳ Load funds from DB';
+  }
+}
+
+async function showDbFund(isin) {
+  const res = await fetch(`${API}/funds/${isin}`);
+  const fund = await res.json();
+  renderFundCard(fund, true, 'result-area');
+  document.getElementById('left-panel').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderFundCard(f, cached, targetId) {
+  const sc = f.performance_scenarios || {};
+
+  const fields = [
+    ['Asset manager', f.asset_manager],
+    ['Fund', f.fund_name],
+    ['Registered in', f.registration_country ? `${f.registration_country} (${f.domicile})` : f.domicile],
+    ['Currency', f.base_currency],
+    ['SFDR', f.sfdr_classification],
+    ['Benchmark', f.benchmark],
+    ['Risk', f.risk_indicator != null ? `${f.risk_indicator} / 7` : null],
+    ['Hold. period', f.recommended_holding_period_years != null ? `${f.recommended_holding_period_years} yrs` : null],
+    ['Ongoing fee', f.ongoing_fee_pct != null ? `${f.ongoing_fee_pct.toFixed(2)}%` : null],
+    ['Trans. cost', f.transaction_cost_pct != null ? `${f.transaction_cost_pct.toFixed(2)}%` : null],
+    ['Entry cost', f.entry_cost_pct != null ? `${f.entry_cost_pct.toFixed(2)}%` : null],
+    ['Exit cost', f.exit_cost_pct != null ? `${f.exit_cost_pct.toFixed(2)}%` : null],
+    ['Equity', f.equity_share != null ? `${(f.equity_share * 100).toFixed(0)}%` : null],
+    ['Bonds', f.bond_share != null ? `${(f.bond_share * 100).toFixed(0)}%` : null],
+    ['Active', f.is_actively_managed != null ? (f.is_actively_managed ? 'Yes' : 'No') : null],
+    ['ESG', f.esg != null ? (f.esg ? 'Yes' : 'No') : null],
+    ['Geography', f.geographic_focus],
+    ['Factsheet date', f.factsheet_date],
+  ];
+
+  const scenarios = [
+    { label: 'Stress 1Y',  val: sc.stress_1y_pct },
+    { label: 'Stress 5Y',  val: sc.stress_5y_ann_pct },
+    { label: 'Bad 1Y',     val: sc.unfavorable_1y_pct },
+    { label: 'Bad 5Y',     val: sc.unfavorable_5y_ann_pct },
+    { label: 'Mid 1Y',     val: sc.moderate_1y_pct },
+    { label: 'Mid 5Y',     val: sc.moderate_5y_ann_pct },
+    { label: 'Good 1Y',    val: sc.favorable_1y_pct },
+    { label: 'Good 5Y',    val: sc.favorable_5y_ann_pct },
+  ];
+
+  const fieldHtml = fields.map(([label, val]) => `
+    <div class="fund-field">
+      <div class="field-label">${label}</div>
+      <div class="field-value ${val == null ? 'null' : ''}">${val ?? '—'}</div>
+    </div>
+  `).join('');
+
+  const scenarioHtml = scenarios.map(s => {
+    const cls = s.val == null ? 'null' : s.val >= 0 ? 'pos' : 'neg';
+    const display = s.val == null ? '—' : (s.val >= 0 ? '+' : '') + s.val.toFixed(1) + '%';
+    return `<div class="scenario-box"><div class="s-label">${s.label}</div><div class="s-val ${cls}">${display}</div></div>`;
+  }).join('');
+
+  const goalHtml = f.investment_goal ? `
+    <div style="padding:0.8rem 1.2rem;font-size:0.75rem;color:#888;border-bottom:1px solid #1a1a1a;line-height:1.5">
+      ${f.investment_goal}
+    </div>
+  ` : '';
+
+  // Type-specific section
+  const typeLabels = {
+    sector_focus: 'Sector', market_cap: 'Market cap', num_holdings: 'Holdings',
+    currency_hedged: 'Currency hedged', top_countries: 'Top countries',
+    bond_type: 'Bond type', avg_duration_years: 'Avg duration', credit_quality: 'Credit quality',
+    yield_to_maturity_pct: 'YTM', target_equity_pct: 'Target equity',
+    target_bond_pct: 'Target bonds', rebalancing_strategy: 'Rebalancing', risk_profile: 'Risk profile',
+  };
+  let typeHtml = '';
+  if (f.type_specific && Object.keys(f.type_specific).length) {
+    const typeCls = f.fund_type ? `type-${f.fund_type}` : '';
+    const chips = Object.entries(f.type_specific).map(([k, v]) => {
+      if (v === null || v === undefined) return '';
+      let display = Array.isArray(v) ? v.join(', ') : typeof v === 'boolean' ? (v ? 'Yes' : 'No') :
+        (k.endsWith('_pct') ? v + '%' : k.endsWith('_years') ? v + ' yrs' : v);
+      return `<div class="type-chip"><div class="tc-label">${typeLabels[k] || k}</div><div class="tc-val">${display}</div></div>`;
+    }).filter(Boolean).join('');
+    typeHtml = chips ? `
+      <div class="type-section">
+        <div class="section-label">${f.fund_type || 'fund'} details</div>
+        <div class="type-grid">${chips}</div>
+      </div>` : '';
+  }
+
+  const typeBadge = f.fund_type ? `<span class="type-badge type-${f.fund_type}">${f.fund_type}</span>` : '';
+
+  document.getElementById(targetId).innerHTML = `
+    <div class="fund-card">
+      <div class="fund-card-header">
+        <div>
+          <div class="fund-name">${f.name}${typeBadge}</div>
+          <div class="fund-isin">${f.isin}</div>
+        </div>
+        <span class="badge ${cached ? 'cached' : 'fresh'}">${cached ? 'CACHED' : 'FRESH'}</span>
+      </div>
+      ${goalHtml}
+      <div class="fund-grid">${fieldHtml}</div>
+      ${typeHtml}
+      <div class="scenarios-section">
+        <div class="section-label">Performance scenarios (annualised)</div>
+        <div class="scenarios-grid">${scenarioHtml}</div>
+      </div>
+    </div>
+  `;
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = type || '';
+}
+</script>
+</body>
+</html>
