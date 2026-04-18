@@ -17,7 +17,6 @@ const STEP_LABELS = [
   'Buffert',
   'Innehav',
   'Justera plan',
-  'Byt fond',
   'Klart',
 ] as const
 
@@ -489,9 +488,6 @@ export function Onboarding() {
   const [monthlyContributionSek, setMonthlyContributionSek] = useState<number | null>(null)
   const [tinkInfo, setTinkInfo] = useState<TinkLinkInfo | null>(null)
   const [connectData, setConnectData] = useState<ConnectPayload | null>(null)
-  const [orderFrom, setOrderFrom] = useState('Nordea Global Climate Impact')
-  const [orderTo, setOrderTo] = useState('Länsförsäkringar Global Index')
-  const [orderAmount, setOrderAmount] = useState<number | null>(50_000)
   const [profileLoading, setProfileLoading] = useState(true)
   const [touched, setTouched] = useState<Set<string>>(new Set())
   const touch = (name: string) => setTouched((prev) => new Set([...prev, name]))
@@ -685,23 +681,6 @@ export function Onboarding() {
     }
   }
 
-  async function submitOrder(e: FormEvent) {
-    e.preventDefault()
-    if (orderAmount === null) {
-      setTouched((prev) => new Set([...prev, 'orderAmount']))
-      return
-    }
-    setError(null)
-    try {
-      await api('/api/dashboard/orders', {
-        method: 'POST',
-        body: { from_name: orderFrom, to_name: orderTo, amount_sek: orderAmount },
-      })
-      setStep(11)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ordern kunde inte läggas.')
-    }
-  }
 
   if (profileLoading) {
     return (
@@ -1224,50 +1203,13 @@ export function Onboarding() {
 
             <div className="step-nav">
               <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
-              <button type="button" className="btn-primary" onClick={next}>Gå vidare till order</button>
+              <button type="button" className="btn-primary" onClick={next}>Nästa</button>
             </div>
           </section>
         )}
 
-        {/* Step 10 — Fund swap */}
+        {/* Step 10 — Done */}
         {step === 10 && (
-          <section key={step} className="surface step-animate stack">
-            <div>
-              <h2>Byt fond (övning)</h2>
-              <p className="muted">Detta är en intern övning. För riktiga byten använder du din bank eller rådgivare.</p>
-            </div>
-            <form className="stack stack--tight" onSubmit={submitOrder}>
-              <label>
-                Från fond
-                <input value={orderFrom} onChange={(e) => setOrderFrom(e.target.value)} />
-              </label>
-              <label>
-                Till fond
-                <input value={orderTo} onChange={(e) => setOrderTo(e.target.value)} />
-              </label>
-              <label>
-                Belopp (kronor)
-                <input
-                  type="number"
-                  min={1000}
-                  value={orderAmount ?? ''}
-                  onChange={(e) => setOrderAmount(e.target.value === '' ? null : Number(e.target.value))}
-                  onBlur={() => touch('orderAmount')}
-                />
-                {touched.has('orderAmount') && orderAmount === null && (
-                  <span className="field-error">Ange ett belopp</span>
-                )}
-              </label>
-              <div className="step-nav">
-                <button type="button" className="btn-ghost" onClick={back}>Tillbaka</button>
-                <button type="submit" className="btn-primary">Lägg order (övning)</button>
-              </div>
-            </form>
-          </section>
-        )}
-
-        {/* Step 11 — Done */}
-        {step === 11 && (
           <section key={step} className="surface step-animate stack">
             <HeroImage className="hero-image--compact" src={images.forestLight} alt={imageAlt.forestLight} />
             <div>
